@@ -1,8 +1,10 @@
+import axios from 'axios';
 import React, { useState, useRef } from 'react';
 import { Upload, Mic, Camera, MapPin } from 'lucide-react';
 
 function HomePage() {
   const [location, setLocation] = useState({ lat: '', lng: '' });
+  const [address, setAddress] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -17,16 +19,35 @@ function HomePage() {
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude.toString(),
-            lng: position.coords.longitude.toString()
-          });
+        async (position) => {
+          const lat = position.coords.latitude.toString();
+          const lng = position.coords.longitude.toString();
+          setLocation({ lat, lng });
+          await fetchAddress(lat, lng);
         },
         (error) => {
-          console.error('Error getting location:', error);
+          console.error("Error getting location:", error);
         }
       );
+    }
+  };
+
+  const fetchAddress = async (lat: string, lng: string) => {
+    try {
+      const apiKey = import.meta.env.VITE_AZURE_MAPS_API_KEY;
+      const url = `https://atlas.microsoft.com/search/address/reverse/json?api-version=1.0&subscription-key=${apiKey}&query=${lat},${lng}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const addressResult = data.addresses?.[0]?.address?.freeformAddress;
+      setAddress(addressResult || "Address not found");
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      setAddress("Error fetching address");
     }
   };
 
@@ -73,7 +94,9 @@ function HomePage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Disaster Type */}
           <div>
-            <label className="block text-white font-medium mb-2">Disaster Type</label>
+            <label className="block text-white font-medium mb-2">
+              Disaster Type
+            </label>
             <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white">
               <option value="">Select disaster type</option>
               <option value="fire">Fire</option>
@@ -84,7 +107,9 @@ function HomePage() {
           </div>
           {/* Severity Level */}
           <div>
-            <label className="block text-white font-medium mb-2">Severity Level</label>
+            <label className="block text-white font-medium mb-2">
+              Severity Level
+            </label>
             <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white">
               <option value="">Select severity</option>
               <option value="low">Low</option>
@@ -95,7 +120,9 @@ function HomePage() {
           </div>
           {/* People Affected */}
           <div>
-            <label className="block text-white font-medium mb-2">People Affected</label>
+            <label className="block text-white font-medium mb-2">
+              People Affected
+            </label>
             <input
               type="number"
               min="0"
@@ -107,7 +134,9 @@ function HomePage() {
 
           {/* Description */}
           <div>
-            <label className="block text-white font-medium mb-2">Description</label>
+            <label className="block text-white font-medium mb-2">
+              Description
+            </label>
             <textarea
               className="w-full border border-gray-400 rounded-lg p-3 h-28 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               placeholder="Describe the situation..."
@@ -117,24 +146,42 @@ function HomePage() {
           {/* Latitude & Longitude */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-white font-medium mb-2">Latitude</label>
+              <label className="block text-white font-medium mb-2">
+                Latitude
+              </label>
               <input
                 type="text"
                 value={location.lat}
-                onChange={(e) => setLocation(prev => ({ ...prev, lat: e.target.value }))}
+                onChange={(e) =>
+                  setLocation((prev) => ({ ...prev, lat: e.target.value }))
+                }
                 className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               />
             </div>
 
             <div>
-              <label className="block text-white font-medium mb-2">Longitude</label>
+              <label className="block text-white font-medium mb-2">
+                Longitude
+              </label>
               <input
                 type="text"
                 value={location.lng}
-                onChange={(e) => setLocation(prev => ({ ...prev, lng: e.target.value }))}
+                onChange={(e) =>
+                  setLocation((prev) => ({ ...prev, lng: e.target.value }))
+                }
                 className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               />
             </div>
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-white font-medium mb-2">Address</label>
+            <textarea
+              value={address}
+              readOnly
+              className="w-full border border-gray-400 rounded-lg p-3 h-23 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
+            />
           </div>
 
           {/* Location Button */}
@@ -158,26 +205,39 @@ function HomePage() {
             <button
               type="button"
               className={`flex-1 flex items-center justify-center space-x-2 ${
-                isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+                isRecording
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-700 hover:bg-gray-600"
               } text-white py-3 rounded-lg transition-all`}
               onClick={isRecording ? stopRecording : startRecording}
             >
               <Mic size={20} />
-              <span>{isRecording ? 'Stop Recording' : 'Record Voice'}</span>
+              <span>{isRecording ? "Stop Recording" : "Record Voice"}</span>
             </button>
 
             <label className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg shadow transition-all cursor-pointer">
               <Camera size={20} />
               <span>Take Photo</span>
-              <input type="file" accept="image/*" capture="environment" className="hidden" />
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+              />
             </label>
           </div>
 
           {/* Recorded Audio */}
           {audioURL && (
             <div className="mt-4">
-              <label className="block text-white font-medium mb-2">Recorded Audio</label>
-              <audio controls src={audioURL} className="w-full bg-gray-700 rounded-lg p-2">
+              <label className="block text-white font-medium mb-2">
+                Recorded Audio
+              </label>
+              <audio
+                controls
+                src={audioURL}
+                className="w-full bg-gray-700 rounded-lg p-2"
+              >
                 Your browser does not support the audio element.
               </audio>
             </div>
