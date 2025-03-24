@@ -142,7 +142,15 @@ async function processAudio(audioBuffer) {
   }
 }
 
-
+app.get("/fetch_reports", async (req, res) => {
+  try {
+    const reports = await Report.find().sort({ timestamp: -1 });
+    res.json(reports);
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+    res.status(500).json({ error: "Failed to fetch reports" });
+  }
+});
 
 // Report Submission API
 app.post("/report", upload.fields([{ name: "image" }, { name: "audio" }]), async (req, res) => {
