@@ -9,6 +9,8 @@ const sdk = require("microsoft-cognitiveservices-speech-sdk");
 const app = express();
 const port = 3000;
 const speech = require("microsoft-cognitiveservices-speech-sdk");
+const cors = require("cors");
+app.use(cors());
 // const fs = require("fs");
 // const sdk = require("microsoft-cognitiveservices-speech-sdk");
 // Load environment variables

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -6,6 +5,7 @@ import MapPage from './pages/MapPage';
 import DashboardPage from './pages/DashboardPage';
 import NotificationsPage from './pages/NotificationsPage';
 import dis from './assets/dis_3.gif';
+import alert from './assets/alert.png';
 
 function App() {
   return (

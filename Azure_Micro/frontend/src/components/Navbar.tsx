@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { AlertTriangle, Map, LayoutDashboard, Bell } from 'lucide-react';
 

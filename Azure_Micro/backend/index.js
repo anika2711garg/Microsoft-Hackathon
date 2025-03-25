@@ -115,46 +115,46 @@ app.post("/analyze-image", upload.single("image"), async (req, res) => {
 });
 
 // Azure AI Search Configuration
-const AZURE_SEARCH_SERVICE = process.env.AZURE_SEARCH_SERVICE;
-const AZURE_SEARCH_INDEX = process.env.AZURE_SEARCH_INDEX;
-const AZURE_SEARCH_API_KEY = process.env.AZURE_SEARCH_API_KEY;
+// const AZURE_SEARCH_SERVICE = process.env.AZURE_SEARCH_SERVICE;
+// const AZURE_SEARCH_INDEX = process.env.AZURE_SEARCH_INDEX;
+// const AZURE_SEARCH_API_KEY = process.env.AZURE_SEARCH_API_KEY;
 
-app.get("/get-labels", async (req, res) => {
-    try {
-        // Azure AI Search API Endpoint
-        const url = `https://${AZURE_SEARCH_SERVICE}.search.windows.net/indexes/${AZURE_SEARCH_INDEX}/docs?api-version=2023-07-01-Preview&$select=label`;
+// app.get("/get-labels", async (req, res) => {
+//     try {
+//         // Azure AI Search API Endpoint
+//         const url = `https://${AZURE_SEARCH_SERVICE}.search.windows.net/indexes/${AZURE_SEARCH_INDEX}/docs?api-version=2023-07-01-Preview&$select=label`;
 
-        // API Request Headers
-        const headers = {
-            "Content-Type": "application/json",
-            "api-key": AZURE_SEARCH_API_KEY,
-        };
+//         // API Request Headers
+//         const headers = {
+//             "Content-Type": "application/json",
+//             "api-key": AZURE_SEARCH_API_KEY,
+//         };
 
-        // Fetch Data from Azure Search
-        const response = await axios.get(url, { headers });
+//         // Fetch Data from Azure Search
+//         const response = await axios.get(url, { headers });
 
-        // Extract labels from results
-        const labels = response.data.value.map(doc => doc.label);
+//         // Extract labels from results
+//         const labels = response.data.value.map(doc => doc.label);
 
-        res.json({ labels });
-    } catch (error) {
-        console.error("Error fetching labels:", error);
-        res.status(500).json({ error: "Failed to retrieve labels" });
-    }
-});
-// Endpoint to handle audio file upload and speech-to-text processing
-// Azure Speech Config
-const speechConfig = sdk.SpeechConfig.fromSubscription(
-  AZURE_SPEECH_KEY,
-  AZURE_SPEECH_REGION
-);
-speechConfig.speechRecognitionLanguage = "en-US";
+//         res.json({ labels });
+//     } catch (error) {
+//         console.error("Error fetching labels:", error);
+//         res.status(500).json({ error: "Failed to retrieve labels" });
+//     }
+// });
+// // Endpoint to handle audio file upload and speech-to-text processing
+// // Azure Speech Config
+// const speechConfig = sdk.SpeechConfig.fromSubscription(
+//   AZURE_SPEECH_KEY,
+//   AZURE_SPEECH_REGION
+// );
+// speechConfig.speechRecognitionLanguage = "en-US";
 
-// Increase initial silence timeout (default is too short)
-speechConfig.setProperty(
-  sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
-  "5000" // 5 seconds
-);
+// // Increase initial silence timeout (default is too short)
+// speechConfig.setProperty(
+//   sdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
+//   "5000" // 5 seconds
+// );
 
 // Route to handle audio file uploads
 app.post("/upload-audio", upload.single("audio"), async (req, res) => {

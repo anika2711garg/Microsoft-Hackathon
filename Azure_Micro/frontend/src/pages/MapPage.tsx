@@ -1,31 +1,58 @@
-import { useEffect, useRef } from "react";
-import * as atlas from "azure-maps-control";
+import { useEffect, useState } from "react";
 import { Filter, MapPin } from "lucide-react";
 import AzureMap from "../components/AzureMap";
 
-type Incident = {
-  id: string;
-  type: "Fire" | "Flood" | "Accident" | "Earthquake" | "Landslide";
-  coordinates: [number, number]; // [longitude, latitude]
-};
+interface Report {
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  media: {
+    text: string;
+    image_description?: string | null;
+    audio_transcription?: string | null;
+  };
+  _id: string;
+  severity: string;
+  description: string;
+  destruction_type?: string;
+  timestamp: string;
+}
 
-const dummyIncidents: Incident[] = [
-  { id: "1", type: "Fire", coordinates: [-97.7431, 30.2672] },
-  { id: "2", type: "Flood", coordinates: [-122.3321, 47.6062] },
-  { id: "3", type: "Earthquake", coordinates: [-118.2437, 34.0522] },
-  { id: "4", type: "Accident", coordinates: [-73.935242, 40.73061] },
-  { id: "5", type: "Landslide", coordinates: [-123.1216, 49.2827] },
-];
-
-const incidentColors: Record<Incident["type"], string> = {
-  Fire: "#FF0000",
-  Flood: "#0000FF",
-  Accident: "#FFFF00",
-  Earthquake: "#800080",
-  Landslide: "#008000",
+const severityColors: Record<string, string> = {
+  High: "#FF0000",
+  Medium: "#FFA500",
+  Low: "#00FF00",
 };
 
 function MapPage() {
+  const [reports, setReports] = useState<Report[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReports = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/fetch_reports");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.reports || !Array.isArray(data.reports)) {
+        throw new Error("Invalid data structure received from backend");
+      }
+      setReports(data.reports);
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      console.error("Error fetching reports:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div
@@ -41,9 +68,7 @@ function MapPage() {
         <h1 className="text-3xl font-bold text-white">
           Real-Time Disaster Map
         </h1>
-
         <div className="flex items-center space-x-4">
-          {/* Search Input */}
           <div className="relative">
             <input
               type="text"
@@ -55,8 +80,6 @@ function MapPage() {
               size={20}
             />
           </div>
-
-          {/* Filter Button */}
           <button className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow transition-all">
             <Filter size={20} />
             <span>Filter Reports</span>
@@ -66,21 +89,17 @@ function MapPage() {
 
       {/* Map Section */}
       <div className="bg-black/60 p-6 rounded-xl shadow-lg backdrop-blur-md flex-1 overflow-hidden">
-        <AzureMap/>
-        {/* <div
-          ref={mapRef}
-          className="h-[600px] bg-gray-900/50 rounded-lg flex-1 overflow-hidden relative"
-        ></div> */}
+        <AzureMap reports={reports} />
 
         {/* Legend Section */}
         <div className="mt-6 flex flex-wrap gap-4 text-white">
-          {Object.entries(incidentColors).map(([type, color]) => (
-            <div key={type} className="flex items-center space-x-2">
+          {Object.entries(severityColors).map(([severity, color]) => (
+            <div key={severity} className="flex items-center space-x-2">
               <div
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: color }}
               ></div>
-              <span>{type}</span>
+              <span>{severity}</span>
             </div>
           ))}
         </div>
@@ -90,3 +109,4 @@ function MapPage() {
 }
 
 export default MapPage;
+  
