@@ -11,6 +11,7 @@ function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [peopleAffected, setPeopleAffected] = useState<number>(0);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
@@ -105,28 +106,43 @@ function HomePage() {
     }
   
     // Convert recorded audio chunks into a single Blob
-    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-  
-    // Create FormData
-    const formData = new FormData();
-    formData.append("severity", severity);
-    formData.append("disasterType", disasterType);
-    formData.append("description", description);
-    formData.append("lat", location.lat);
-    formData.append("lng", location.lng);
-    formData.append("address",address);
-    formData.append("peopleAffected", peopleAffected.toString());
-    formData.append("image", image); // Ensure `image` is a File object
-    formData.append("audio", audioBlob, "recorded_audio.wav"); // Add a proper filename
-
-  
-    console.log("FormData being sent:", formData.get("address"));
-  
+   const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" }); // Original format
+   const formDataAudio = new FormData();
+   formDataAudio.append("audio", audioBlob);
     try {
-      const response = await axios.post("http://localhost:3000/report", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const responseAudio = await axios.post(
+        "http://localhost:3000/convert-to-wav",
+        formDataAudio,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          responseType: "blob", // Expect a binary response
+        }
+      );
+
+      const convertedAudioBlob = new Blob([responseAudio.data], {
+        type: "audio/wav",
       });
-  
+      const convertedAudioURL = URL.createObjectURL(convertedAudioBlob);
+      setAudioURL(convertedAudioURL); // Update the UI or use this URL for further processing
+
+      const formData = new FormData();
+      formData.append("severity", severity);
+      formData.append("destruction_type", disasterType);
+      formData.append("description", description);
+      formData.append("lat", location.lat);
+      formData.append("lng", location.lng);
+      formData.append("address", address);
+      formData.append("peopleAffected", peopleAffected.toString());
+      formData.append("image", image); // Ensure `image` is a File object
+      formData.append("audio", convertedAudioBlob, "recorded_audio.wav");
+
+      const response = await axios.post(
+        "http://localhost:3000/report",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
       console.log("Report submitted successfully:", response.data);
     } catch (error) {
       console.error("Error submitting report:", error);
@@ -151,6 +167,11 @@ function HomePage() {
   };
 
   const fetchAddress = async (lat: string, lng: string) => {
+    if (!lat || !lng || isNaN(Number(lat)) || isNaN(Number(lng))) {
+      setAddress("Invalid coordinates");
+      return;
+    }
+
     try {
       const apiKey = import.meta.env.VITE_AZURE_MAPS_API_KEY;
       const url = `https://atlas.microsoft.com/search/address/reverse/json?api-version=1.0&subscription-key=${apiKey}&query=${lat},${lng}`;
@@ -168,6 +189,7 @@ function HomePage() {
       setAddress("Error fetching address");
     }
   };
+
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -197,6 +219,22 @@ function HomePage() {
     }
   };
 
+  const handleLocationChange = (key: "lat" | "lng", value: string) => {
+    setLocation((prev) => ({ ...prev, [key]: value }));
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      fetchAddress(
+        key === "lat" ? value : location.lat,
+        key === "lng" ? value : location.lng
+      );
+    }, 500); // Debounce delay of 500ms
+  };
+
+
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
@@ -215,8 +253,11 @@ function HomePage() {
             <label className="block text-white font-medium mb-2">
               Disaster Type
             </label>
-            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"  value={disasterType}
-        onChange={handleSelectChange}>
+            <select
+              className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
+              value={disasterType}
+              onChange={handleSelectChange}
+            >
               <option value="">Select disaster type</option>
               <option value="fire">Fire</option>
               <option value="flood">Flood</option>
@@ -229,8 +270,11 @@ function HomePage() {
             <label className="block text-white font-medium mb-2">
               Severity Level
             </label>
-            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white" value={severity}
-        onChange={handleSeverityChange}>
+            <select
+              className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
+              value={severity}
+              onChange={handleSeverityChange}
+            >
               <option value="">Select severity</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -274,9 +318,7 @@ function HomePage() {
               <input
                 type="text"
                 value={location.lat}
-                onChange={(e) =>
-                  setLocation((prev) => ({ ...prev, lat: e.target.value }))
-                }
+                onChange={(e) => handleLocationChange("lat", e.target.value)}
                 className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               />
             </div>
@@ -288,14 +330,11 @@ function HomePage() {
               <input
                 type="text"
                 value={location.lng}
-                onChange={(e) =>
-                  setLocation((prev) => ({ ...prev, lng: e.target.value }))
-                }
+                onChange={(e) => handleLocationChange("lng", e.target.value)}
                 className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               />
             </div>
           </div>
-
           {/* Address */}
           <div>
             <label className="block text-white font-medium mb-2">Address</label>

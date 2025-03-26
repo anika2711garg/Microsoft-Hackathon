@@ -1,3 +1,5 @@
+
+
 const getAccessToken = async () => {
   const API_URL = `https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.VideoIndexer/accounts/${ACCOUNT_NAME}/generateAccessToken?api-version=2025-01-01`;
 
