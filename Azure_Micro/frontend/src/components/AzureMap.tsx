@@ -18,14 +18,14 @@ interface Report {
   timestamp: string;
 }
 
-
-
 function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<atlas.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect((): (() => void) => {
+    console.log("AzureMap reports:", reports);
+    
     if (mapRef.current) {
       const map = new atlas.Map(mapRef.current, {
         view: "Auto",
@@ -40,7 +40,6 @@ function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
       map.events.add("ready", () => {
         const datasource = new atlas.source.DataSource();
         map.sources.add(datasource);
-
         const resultLayer = new atlas.layer.SymbolLayer(datasource, undefined, {
           iconOptions: {
             image: "pin-round-darkblue",
