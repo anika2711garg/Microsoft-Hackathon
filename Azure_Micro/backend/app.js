@@ -12,8 +12,7 @@ import {
   generateBlobSASQueryParameters,
   BlobSASPermissions,
 } from "@azure/storage-blob";
-import { log } from "console";
-
+import speech from "microsoft-cognitiveservices-speech-sdk";
 // Configure dotenv
 dotenv.config();
 
@@ -246,7 +245,7 @@ const getAccessToken = async () => {
     }
   );
   console.log("Access Token:", response.data);
-  
+
   return response.data;
 };
 
@@ -311,7 +310,6 @@ app.post("/uploadToVideoIndexer", async (req, res) => {
     res.status(500).json({ message: "Error uploading video", error });
   }
 });
-
 
 app.post(
   "/report",
