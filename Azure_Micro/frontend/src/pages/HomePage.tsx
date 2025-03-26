@@ -46,10 +46,13 @@ function HomePage() {
     formData.append("description", description);
     formData.append("lat", location.lat);
     formData.append("lng", location.lng);
+    formData.append("address",address);
+    formData.append("peopleAffected", peopleAffected.toString());
     formData.append("image", image); // Ensure `image` is a File object
     formData.append("audio", audioBlob, "recorded_audio.wav"); // Add a proper filename
+
   
-    console.log("FormData being sent:", formData.get("lat"), formData.get("lng"));
+    console.log("FormData being sent:", formData.get("address"));
   
     try {
       const response = await axios.post("http://localhost:3000/report", formData, {

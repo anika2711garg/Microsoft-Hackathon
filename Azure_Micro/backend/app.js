@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
@@ -7,7 +6,7 @@ const mongoose = require("mongoose");
 const fs = require("fs");
 const sdk = require("microsoft-cognitiveservices-speech-sdk");
 const app = express();
-const cors = require("cors")
+const cors = require("cors");
 const port = 3000;
 const speech = require("microsoft-cognitiveservices-speech-sdk");
 // const fs = require("fs");
@@ -18,13 +17,10 @@ const ENDPOINT = process.env.AZURE_COMPUTER_VISION_ENDPOINT;
 const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY;
 const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION;
 const MONGO_URI = process.env.MONGODB_URI;
-app.use(cors())
+app.use(cors());
 
 // MongoDB Connection
-mongoose.connect(MONGO_URI, {
-
- 
-});
+mongoose.connect(MONGO_URI, {});
 mongoose.connection.on("connected", () => console.log("Connected to MongoDB"));
 const speechConfig = sdk.SpeechConfig.fromSubscription(
   AZURE_SPEECH_KEY,
@@ -47,11 +43,12 @@ const ReportSchema = new mongoose.Schema({
   location: {
     latitude: Number,
     longitude: Number,
-    
   },
   severity: String,
   destruction_type: String,
   description: String,
+  address: String,
+  peopleAffected: Number,
   media: {
     text: String,
     image_description: String,
@@ -87,11 +84,13 @@ async function analyzeImage(imageBuffer) {
 
     return captions;
   } catch (error) {
-    console.error("Azure Vision Error:", error.response ? error.response.data : error.message);
+    console.error(
+      "Azure Vision Error:",
+      error.response ? error.response.data : error.message
+    );
     return null;
   }
 }
-
 
 // Azure Speech-to-Text
 async function processAudio(audioBuffer) {
@@ -137,7 +136,6 @@ async function processAudio(audioBuffer) {
         }
       );
     });
-
   } catch (error) {
     console.error("Server Error:", error);
     return null;
@@ -155,51 +153,55 @@ app.get("/fetch_reports", async (req, res) => {
 });
 
 // Report Submission API
-app.post("/report", upload.fields([{ name: "image" }, { name: "audio" }]), async (req, res) => {
-  try {
-    const { severity, destruction_type, description, lat, lng } = req.body;
-    console.log(req.body)
-    let imageCaption = null;
-    let audioTranscription = null;
+app.post(
+  "/report",
+  upload.fields([{ name: "image" }, { name: "audio" }]),
+  async (req, res) => {
+    try {
+      const { severity, address,peopleAffected,destruction_type, description, lat, lng } = req.body;
+      console.log(req.body);
+      let imageCaption = null;
+      let audioTranscription = null;
 
-    // Analyze Image if provided
-    if (req.files?.image) {
-      imageCaption = await analyzeImage(req.files.image[0].buffer);
-      imageCaption = imageCaption.map(caption => caption.text).join("\n")
+      // Analyze Image if provided
+      if (req.files?.image) {
+        imageCaption = await analyzeImage(req.files.image[0].buffer);
+        imageCaption = imageCaption.map((caption) => caption.text).join("\n");
+      }
+
+      console.log("The image description:", imageCaption);
+
+      // Process Audio if provided
+      if (req.files?.audio) {
+        console.log("Processing audio for transcription...");
+        audioTranscription = await processAudio(req.files.audio[0].buffer);
+        console.log("Audio transcription completed:", audioTranscription);
+      }
+
+      // Create report after both tasks are completed
+      const report = new Report({
+        location: { latitude: lat, longitude: lng, address: address },
+        severity,
+        destruction_type,
+        address,
+        peopleAffected: peopleAffected,
+        description,
+        media: {
+          text: description,
+          image_description: imageCaption,
+          audio_transcription: audioTranscription,
+        },
+      });
+
+      await report.save();
+      console.log("Report saved successfully!");
+
+      res.json({ success: true, report });
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      res.status(500).json({ error: "Failed to submit report" });
     }
-
-    console.log("The image description:", imageCaption);
-
-    // Process Audio if provided
-    if (req.files?.audio) {
-      console.log("Processing audio for transcription...");
-      audioTranscription = await processAudio(req.files.audio[0].buffer);
-      console.log("Audio transcription completed:", audioTranscription);
-    }
-
-    // Create report after both tasks are completed
-    const report = new Report({
-      location: { latitude: lat, longitude: lng },
-      severity,
-      destruction_type,
-      description,
-      media: {
-        text: description,
-        image_description: imageCaption,
-        audio_transcription: audioTranscription,
-      },
-    });
-
-    await report.save();
-    console.log("Report saved successfully!");
-
-    res.json({ success: true, report });
-
-  } catch (error) {
-    console.error("Error submitting report:", error);
-    res.status(500).json({ error: "Failed to submit report" });
   }
-});
-
+);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

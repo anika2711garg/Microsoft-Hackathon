@@ -92,7 +92,7 @@ function MapPage() {
       {/* Map Section */}
       <div className="bg-black/60 p-6 rounded-xl shadow-lg backdrop-blur-md flex-1 overflow-hidden">
         <AzureMap reports={reports} />
-
+        
         {/* Legend Section */}
         <div className="mt-6 flex flex-wrap gap-4 text-white">
           {Object.entries(severityColors).map(([severity, color]) => (
