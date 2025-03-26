@@ -1,9 +1,4 @@
-const {
-  BlobServiceClient,
-  generateBlobSASQueryParameters,
-  BlobSASPermissions,
-  StorageSharedKeyCredential,
-} = require("@azure/storage-blob");
+
 
 const accountName = "<your-account-name>"; // Replace with your Azure Blob Storage account name
 const accountKey = "<your-account-key>"; // Replace with your Azure Blob Storage account key
@@ -11,52 +6,44 @@ const containerName = "uploadvids"; // Container name
 const blobName = "example-video.mp4"; // Replace with your file name
 const localFilePath = "<path-to-your-local-file>"; // Local file path to upload
 
-async function uploadBlobAndGenerateSAS() {
-  try {
-    // Create a Blob Service Client
-    const sharedKeyCredential = new StorageSharedKeyCredential(
-      accountName,
-      accountKey
-    );
-    const blobServiceClient = new BlobServiceClient(
-      `https://${accountName}.blob.core.windows.net`,
-      sharedKeyCredential
-    );
+const axios = require("axios");
 
-    // Get a container client
-    const containerClient = blobServiceClient.getContainerClient(containerName);
+const VIDEO_INDEXER_API_KEY = "YOUR_VIDEO_INDEXER_API_KEY";
+const ACCOUNT_ID = "YOUR_ACCOUNT_ID";
+const LOCATION = "YOUR_LOCATION";
 
-    // Ensure the container exists
-    await containerClient.createIfNotExists({ access: "container" });
-    console.log(`Container "${containerName}" is ready.`);
+const getAccessToken = async () => {
+  const response = await axios.post(
+    `https://api.videoindexer.ai/Auth/${LOCATION}/Accounts/${ACCOUNT_ID}/AccessToken`,
+    null,
+    {
+      headers: {
+        "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
+      },
+    }
+  );
+  return response.data;
+};
 
-    // Upload the blob
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    await blockBlobClient.uploadFile(localFilePath);
-    console.log(`Blob "${blobName}" uploaded successfully.`);
+const uploadVideo = async (videoUrl) => {
+  const accessToken = await getAccessToken();
+  const endpoint = `https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${accessToken}`;
 
-    // Generate SAS Token
-    const sasOptions = {
-      containerName: containerName,
-      blobName: blobName,
-      permissions: BlobSASPermissions.parse("r"), // Read-only permissions
-      startsOn: new Date(), // Start time
-      expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // Expiry time (1 hour from now)
-    };
+  const response = await axios.post(
+    endpoint,
+    {
+      name: "My Video",
+      description: "Uploaded via API",
+      privacy: "Private",
+      videoUrl,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
-    const sasToken = generateBlobSASQueryParameters(
-      sasOptions,
-      sharedKeyCredential
-    ).toString();
-
-    // Generate public URL with SAS token
-    const sasUrl = `${blockBlobClient.url}?${sasToken}`;
-    console.log(`SAS URL: ${sasUrl}`);
-    return sasUrl;
-  } catch (error) {
-    console.error("Error generating SAS token or uploading blob:", error);
-  }
-}
-
-// Call the function
-uploadBlobAndGenerateSAS();
+  console.log("Video uploaded successfully:", response.data);
+  return response.data;
+};

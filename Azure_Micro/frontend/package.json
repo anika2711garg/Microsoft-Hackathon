@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/identity": "^4.8.0",
+    "@azure/storage-blob": "^12.27.0",
     "@react-spring/web": "^9.7.5",
     "axios": "^1.8.4",
     "date-fns": "^3.3.1",

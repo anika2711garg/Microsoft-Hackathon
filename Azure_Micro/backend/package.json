@@ -8,9 +8,11 @@
   },
   "author": "",
   "license": "ISC",
+  "type": "module",
   "dependencies": {
     "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/ms-rest-js": "^2.7.0",
+    "@azure/storage-blob": "^12.27.0",
     "axios": "^1.8.3",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
