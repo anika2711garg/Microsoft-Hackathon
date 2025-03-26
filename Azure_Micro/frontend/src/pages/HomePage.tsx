@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Mic, Camera, MapPin } from 'lucide-react';
+import axios from 'axios';
 
 function HomePage() {
   const [location, setLocation] = useState({ lat: "", lng: "" });
@@ -78,7 +79,6 @@ function HomePage() {
   };
 
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
   const [disasterType, setDisasterType] = useState("");
   const [description,setDescription] = useState("")
   const [severity,setSeverity] = useState("")
