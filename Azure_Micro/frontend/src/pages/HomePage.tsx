@@ -1,9 +1,8 @@
-import axios from 'axios';
 import React, { useState, useRef } from 'react';
 import { Upload, Mic, Camera, MapPin } from 'lucide-react';
 
 function HomePage() {
-  const [location, setLocation] = useState({ lat: '', lng: '' });
+  const [location, setLocation] = useState({ lat: "", lng: "" });
   const [address, setAddress] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [image, setImage] = useState<File | null>(null);
@@ -11,6 +10,75 @@ function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [peopleAffected, setPeopleAffected] = useState<number>(0);
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+
+  
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      var publicUrl;
+      try {
+        setUploading(true);
+        setUploadStatus("Uploading...");
+
+        const response = await fetch("http://localhost:3000/uploadVideo", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          publicUrl = data.publicUrl;
+          setUploadStatus(`Upload successful! File URL: ${data.publicUrl}`);
+        } else {
+          const error = await response.json();
+          setUploadStatus(`Error: ${error.message}`);
+        }
+
+        setUploadStatus(
+          "File uploaded to Blob Storage. Uploading to Video Indexer..."
+        );
+
+        // Then upload the public URL to Azure Video Indexer
+        const indexerResponse = await fetch(
+          "http://localhost:3000/uploadToVideoIndexer",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              videoUrl: publicUrl,
+            }),
+          }
+        );
+
+        if (!indexerResponse.ok) {
+          const error = await indexerResponse.json();
+          throw new Error(error.message);
+        }
+
+        const indexerData = await indexerResponse.json();
+        setUploadStatus(
+          `Video successfully indexed! Indexer ID: ${indexerData.data.id}`
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        setUploadStatus("Error uploading file.");
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
+
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
   const [disasterType, setDisasterType] = useState("");
   const [description,setDescription] = useState("")
   const [severity,setSeverity] = useState("")
@@ -110,7 +178,7 @@ function HomePage() {
     };
 
     mediaRecorderRef.current.onstop = () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
       const audioUrl = URL.createObjectURL(audioBlob);
       setAudioURL(audioUrl);
     };
@@ -250,7 +318,14 @@ function HomePage() {
             <label className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg shadow transition-all cursor-pointer">
               <Upload size={20} />
               <span>Upload Video</span>
-              <input type="file" accept="video/*" className="hidden" />
+              <input
+                type="file"
+                accept="*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {uploading && <p className="mt-4 text-blue-500">Uploading...</p>}
+              {uploadStatus && <p className="mt-4">{uploadStatus}</p>}
             </label>
 
             <button

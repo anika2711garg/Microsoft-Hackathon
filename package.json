@@ -8,12 +8,11 @@
   },
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/ms-rest-js": "^2.7.0",
-    "@azure/storage-blob": "^12.27.0",
     "axios": "^1.8.3",
+    "azure-maps-control": "^3.6.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -23,9 +22,6 @@
     "microsoft-cognitiveservices-speech-sdk": "^1.43.0",
     "mongodb": "^6.14.2",
     "mongoose": "^8.12.1",
-    "multer": "^1.4.5-lts.1",
-    "nodemon": "^3.1.9"
-  "dependencies": {
-    "cors": "^2.8.5"
+    "multer": "^1.4.5-lts.1"
   }
 }
