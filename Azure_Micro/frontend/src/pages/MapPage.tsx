@@ -37,7 +37,7 @@ function MapPage() {
       }
       
       const data = await response.json();
-      console.log("Reports fetched:", data[0].location.latitude);
+      // console.log("Reports fetched:", data[0].location.latitude);
       // if (!data.reports || !Array.isArray(data.reports)) {
       //   throw new Error("Invalid data structure received from backend");
       // }
