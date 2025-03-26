@@ -1,14 +1,25 @@
-require("dotenv").config();
-const express = require("express");
-const multer = require("multer");
-const axios = require("axios");
-const mongoose = require("mongoose");
-const fs = require("fs");
-const sdk = require("microsoft-cognitiveservices-speech-sdk");
+import dotenv from "dotenv";
+import express from "express";
+import multer from "multer";
+import axios from "axios";
+import mongoose from "mongoose";
+import fs from "fs";
+import sdk from "microsoft-cognitiveservices-speech-sdk";
+import cors from "cors";
+import {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+} from "@azure/storage-blob";
+import speech from "microsoft-cognitiveservices-speech-sdk";
+// Configure dotenv
+dotenv.config();
+
 const app = express();
-const cors = require("cors");
+app.use(express.json());
 const port = 3000;
-const speech = require("microsoft-cognitiveservices-speech-sdk");
+app.use(cors());
 // const fs = require("fs");
 // const sdk = require("microsoft-cognitiveservices-speech-sdk");
 // Load environment variables
@@ -17,7 +28,6 @@ const ENDPOINT = process.env.AZURE_COMPUTER_VISION_ENDPOINT;
 const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY;
 const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION;
 const MONGO_URI = process.env.MONGODB_URI;
-app.use(cors());
 
 // MongoDB Connection
 mongoose.connect(MONGO_URI, {});
@@ -55,6 +65,7 @@ const ReportSchema = new mongoose.Schema({
     audio_transcription: String,
   },
 });
+
 
 const Report = mongoose.model("Report", ReportSchema);
 
@@ -144,64 +155,214 @@ async function processAudio(audioBuffer) {
 
 app.get("/fetch_reports", async (req, res) => {
   try {
-    const reports = await Report.find().sort({ timestamp: -1 });
-    res.json(reports);
+    const reports = await Report.find();
+    res.json({ success: true, reports });
   } catch (error) {
     console.error("Error fetching reports:", error);
     res.status(500).json({ error: "Failed to fetch reports" });
   }
 });
 
-// Report Submission API
-app.post(
-  "/report",
-  upload.fields([{ name: "image" }, { name: "audio" }]),
-  async (req, res) => {
-    try {
-      const { severity, address,peopleAffected,destruction_type, description, lat, lng } = req.body;
-      console.log(req.body);
-      let imageCaption = null;
-      let audioTranscription = null;
-
-      // Analyze Image if provided
-      if (req.files?.image) {
-        imageCaption = await analyzeImage(req.files.image[0].buffer);
-        imageCaption = imageCaption.map((caption) => caption.text).join("\n");
-      }
-
-      console.log("The image description:", imageCaption);
-
-      // Process Audio if provided
-      if (req.files?.audio) {
-        console.log("Processing audio for transcription...");
-        audioTranscription = await processAudio(req.files.audio[0].buffer);
-        console.log("Audio transcription completed:", audioTranscription);
-      }
-
-      // Create report after both tasks are completed
-      const report = new Report({
-        location: { latitude: lat, longitude: lng, address: address },
-        severity,
-        destruction_type,
-        address,
-        peopleAffected: peopleAffected,
-        description,
-        media: {
-          text: description,
-          image_description: imageCaption,
-          audio_transcription: audioTranscription,
-        },
-      });
-
-      await report.save();
-      console.log("Report saved successfully!");
-
-      res.json({ success: true, report });
-    } catch (error) {
-      console.error("Error submitting report:", error);
-      res.status(500).json({ error: "Failed to submit report" });
-    }
-  }
+const ACCOUNT_NAME = "videoin";
+const ACCOUNT_KEY =
+  "jjemQqFOcqj7ekLpVnyzhH7zbW1NJZySlGAT89cNhWJ0ZmZbPTgEuJt3W6NLK+iX13gzcdQrFl02+AStpLUXJA==";
+const AZURE_STORAGE_CONNECTION_STRING =
+  process.env.AZURE_STORAGE_CONNECTION_STRING;
+const AZURE_CONTAINER_NAME = "uploadvideo";
+const blobServiceClient = BlobServiceClient.fromConnectionString(
+  AZURE_STORAGE_CONNECTION_STRING
 );
+const containerClient =
+  blobServiceClient.getContainerClient(AZURE_CONTAINER_NAME);
+
+app.post("/uploadVideo", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const blobName = `upload_${Date.now()}_${file.originalname}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Upload the file to Azure Blob Storage
+    await blockBlobClient.uploadData(file.buffer);
+    const blobUrl = blockBlobClient.url;
+    // Generate SAS token
+    const sasToken = generateBlobSAS(
+      blobName,
+      AZURE_CONTAINER_NAME,
+      ACCOUNT_NAME,
+      ACCOUNT_KEY
+    );
+
+    // Publicly accessible URL
+    const publicUrl = `${blobUrl}?${sasToken}`;
+
+    console.log("File uploaded successfully:", publicUrl);
+    res.status(201).json({ message: "File uploaded successfully", publicUrl });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ message: "Error uploading file" });
+  }
+});
+
+function generateBlobSAS(blobName, containerName, accountName, accountKey) {
+  const sharedKeyCredential = new StorageSharedKeyCredential(
+    accountName,
+    accountKey
+  );
+
+  // Define SAS permissions
+  const permissions = BlobSASPermissions.parse("r"); // Read-only access
+
+  // Set SAS token options
+  const sasOptions = {
+    containerName,
+    blobName,
+    permissions,
+    startsOn: new Date(), // Token is valid immediately
+    expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // Valid for 1 hour
+  };
+
+  // Generate SAS token
+  return generateBlobSASQueryParameters(
+    sasOptions,
+    sharedKeyCredential
+  ).toString();
+}
+
+const VIDEO_INDEXER_API_KEY = process.env.AZURE_VIDEO_INDEXER_API_KEY;
+const ACCOUNT_ID = process.env.ACCOUNT_ID;
+const LOCATION = process.env.LOCATION;
+
+const getAccessToken = async () => {
+  const response = await axios.post(
+    `https://api.videoindexer.ai/Auth/${LOCATION}/Accounts/${ACCOUNT_ID}/AccessToken`,
+    null,
+    {
+      headers: {
+        "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
+      },
+    }
+  );
+  console.log("Access Token:", response.data);
+
+  return response.data;
+};
+
+//   const uploadVideoToIndexer = async (videoUrl) => {
+//   const accessToken = await getAccessToken();
+//   const endpoint = https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${accessToken};
+
+//   const response = await axios.post(
+//     endpoint,
+//     {
+//       name: "My Video",
+//       description: "Uploaded via API",
+//       privacy: "Private",
+//       videoUrl,
+//     },
+//     {
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     }
+//   );
+
+//   console.log("Video uploaded successfully:", response.data);
+//   return response.data;
+// };
+
+// Report Submission API
+
+app.post("/uploadToVideoIndexer", async (req, res) => {
+  try {
+    const { videoUrl } = req.body;
+    console.log("Received body:", req.body);
+
+    const videoIndexerAccessToken = await getAccessToken();
+
+    console.log("Video Indexer Access Token:", videoIndexerAccessToken);
+
+    if (!videoUrl) {
+      return res.status(400).json({ message: "Video URL is required" });
+    }
+
+    const uploadUrl = `https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${videoIndexerAccessToken}&name=${encodeURIComponent(
+      "Uploaded Video"
+    )}&description=${encodeURIComponent("Video uploaded via API")}`;
+
+    const response = await axios.post(uploadUrl, null, {
+      headers: {
+        "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
+        "Content-Type": "application/json",
+      },
+      params: {
+        videoUrl,
+      },
+    });
+
+    res.status(200).json({
+      message: "Video uploaded to Azure Video Indexer successfully",
+      data: response.data,
+    });
+  } catch (error) {
+    console.error("Error uploading video to Azure Video Indexer:", error);
+    res.status(500).json({ message: "Error uploading video", error });
+  }
+});
+
+app.post(
+    "/report",
+    upload.fields([{ name: "image" }, { name: "audio" }]),
+    async (req, res) => {
+      try {
+        const { severity, address,peopleAffected,destruction_type, description, lat, lng } = req.body;
+        console.log(req.body);
+        let imageCaption = null;
+        let audioTranscription = null;
+  
+        // Analyze Image if provided
+        if (req.files?.image) {
+          imageCaption = await analyzeImage(req.files.image[0].buffer);
+          imageCaption = imageCaption.map((caption) => caption.text).join("\n");
+        }
+  
+        console.log("The image description:", imageCaption);
+  
+        // Process Audio if provided
+        if (req.files?.audio) {
+          console.log("Processing audio for transcription...");
+          audioTranscription = await processAudio(req.files.audio[0].buffer);
+          console.log("Audio transcription completed:", audioTranscription);
+        }
+  
+        // Create report after both tasks are completed
+        const report = new Report({
+          location: { latitude: lat, longitude: lng, address: address },
+          severity,
+          destruction_type,
+          address,
+          peopleAffected: peopleAffected,
+          description,
+          media: {
+            text: description,
+            image_description: imageCaption,
+            audio_transcription: audioTranscription,
+          },
+        });
+  
+        await report.save();
+        console.log("Report saved successfully!");
+  
+        res.json({ success: true, report });
+      } catch (error) {
+        console.error("Error submitting report:", error);
+        res.status(500).json({ error: "Failed to submit report" });
+      }
+    }
+  );
+  
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

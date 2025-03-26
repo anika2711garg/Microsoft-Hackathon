@@ -32,16 +32,17 @@ function MapPage() {
   const fetchReports = async () => {
     try {
       const response = await fetch("http://localhost:3000/fetch_reports");
+      
       if (!response.ok) {
         throw new Error("error fetching reports");
       }
       
       const data = await response.json();
-      console.log("Reports fetched:", data[0].location.latitude);
+      console.log("Reports fetched:", data.reports);
       // if (!data.reports || !Array.isArray(data.reports)) {
       //   throw new Error("Invalid data structure received from backend");
       // }
-      setReports(data);
+      setReports(data.reports);
     } catch (err: unknown) {
       setError((err as Error).message);
       console.error("Error fetching reports:", err);
