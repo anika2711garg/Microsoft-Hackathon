@@ -5,6 +5,7 @@ function HomePage() {
   const [location, setLocation] = useState({ lat: "", lng: "" });
   const [address, setAddress] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [image, setImage] = useState<File | null>(null);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -78,9 +79,57 @@ function HomePage() {
 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Form submitted:", location);
+  const [disasterType, setDisasterType] = useState("");
+  const [description,setDescription] = useState("")
+  const [severity,setSeverity] = useState("")
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
   };
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImage(e.target.files[0]);
+    }
+  };
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDisasterType(e.target.value);
+  };
+  const handleSeverityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSeverity(e.target.value);
+  };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  
+    if (!image || !audioChunksRef.current) {
+      alert("Please select an image and record audio before submitting.");
+      return;
+    }
+  
+    // Convert recorded audio chunks into a single Blob
+    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+  
+    // Create FormData
+    const formData = new FormData();
+    formData.append("severity", severity);
+    formData.append("disasterType", disasterType);
+    formData.append("description", description);
+    formData.append("lat", location.lat);
+    formData.append("lng", location.lng);
+    formData.append("image", image); // Ensure `image` is a File object
+    formData.append("audio", audioBlob, "recorded_audio.wav"); // Add a proper filename
+  
+    console.log("FormData being sent:", formData.get("lat"), formData.get("lng"));
+  
+    try {
+      const response = await axios.post("http://localhost:3000/report", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+  
+      console.log("Report submitted successfully:", response.data);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+    }
+  };
+  
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -163,7 +212,8 @@ function HomePage() {
             <label className="block text-white font-medium mb-2">
               Disaster Type
             </label>
-            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white">
+            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"  value={disasterType}
+        onChange={handleSelectChange}>
               <option value="">Select disaster type</option>
               <option value="fire">Fire</option>
               <option value="flood">Flood</option>
@@ -176,7 +226,8 @@ function HomePage() {
             <label className="block text-white font-medium mb-2">
               Severity Level
             </label>
-            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white">
+            <select className="w-full border border-gray-400 rounded-lg p-3 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white" value={severity}
+        onChange={handleSeverityChange}>
               <option value="">Select severity</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -206,6 +257,8 @@ function HomePage() {
             <textarea
               className="w-full border border-gray-400 rounded-lg p-3 h-28 focus:ring-4 focus:ring-yellow-400 transition bg-gray-700 text-white"
               placeholder="Describe the situation..."
+              value={description}
+              onChange={handleDescriptionChange}
             />
           </div>
 
@@ -296,6 +349,7 @@ function HomePage() {
                 accept="image/*"
                 capture="environment"
                 className="hidden"
+                onChange={handleImageChange}
               />
             </label>
           </div>

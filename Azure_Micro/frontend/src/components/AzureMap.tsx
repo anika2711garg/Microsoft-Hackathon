@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as atlas from "azure-maps-control";
 
 interface Report {
@@ -18,13 +18,10 @@ interface Report {
   timestamp: string;
 }
 
-interface AzureMapProps {
-  reports: Report[];
-}
-
-function AzureMap({ reports }: AzureMapProps): JSX.Element {
+function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<atlas.Map | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect((): (() => void) => {
     console.log("AzureMap reports:", reports);
@@ -34,18 +31,15 @@ function AzureMap({ reports }: AzureMapProps): JSX.Element {
         view: "Auto",
         authOptions: {
           authType: atlas.AuthenticationType.subscriptionKey,
-          subscriptionKey: import.meta.env.VITE_AZURE_MAPS_API_KEY as string, // Replace with your Azure Maps subscription key
+          subscriptionKey: import.meta.env.VITE_AZURE_MAPS_API_KEY as string,
         },
         zoom: 2,
-        center: [0.2156, 72.6369],
+        center: [0, 0],
       });
 
       map.events.add("ready", () => {
-        // Create a data source and add it to the map
         const datasource = new atlas.source.DataSource();
         map.sources.add(datasource);
-
-        // Add a layer for rendering point data
         const resultLayer = new atlas.layer.SymbolLayer(datasource, undefined, {
           iconOptions: {
             image: "pin-round-darkblue",
@@ -59,20 +53,61 @@ function AzureMap({ reports }: AzureMapProps): JSX.Element {
 
         map.layers.add(resultLayer);
 
-        // Example: Adding a point to the data source
-        datasource.add(new atlas.data.Point([-97.7431, 30.2672])); // Add coordinates
-        datasource.add(new atlas.data.Point([84.7431, 3.2672])); // Add coordinates
+        for (const report of reports) {
+          if (report.location) {
+            const feature = new atlas.data.Feature(
+              new atlas.data.Point([report.location.longitude, report.location.latitude]),
+              {
+                id: report._id,
+                severity: report.severity || "Unknown",
+                description: report.description || "No Description",
+                destruction_type: report.destruction_type || "Unknown",
+                timestamp: report.timestamp || "N/A",
+                media: report.media || {},
+              }
+            );
+            datasource.add(feature);
+          }
+        }
+
+        const popup = new atlas.Popup({ pixelOffset: [0, -10] });
+
+        map.events.add("click", resultLayer, (e) => {
+          if (e.shapes && e.shapes.length > 0) {
+            const feature = e.shapes[0] as atlas.Shape;
+            const properties = feature.getProperties();
+            const position = feature.getCoordinates() as atlas.data.Position;
+
+            const content = `
+<div class="bg-white p-2 rounded-md shadow-md text-sm">
+  <strong class="block text-lg font-semibold">${properties.description}</strong>
+  <p><span class="font-medium">Severity:</span> ${properties.severity}</p>
+  <p><span class="font-medium">Type:</span> ${properties.destruction_type || "Unknown"}</p>
+  <p><span class="font-medium">Timestamp:</span> ${new Date(properties.timestamp).toLocaleString()}</p>
+</div>
+`;
+
+            popup.setOptions({
+              position,
+              content,
+              pixelOffset: [0, -20],
+              closeButton: true,
+            });
+            console.log(properties);
+            map.popups.add(popup);
+            popup.open(map);
+          }
+        });
       });
 
       mapInstanceRef.current = map;
     }
 
-    // Cleanup on component unmount
     return () => {
       mapInstanceRef.current?.dispose();
       mapInstanceRef.current = null;
     };
-  }, []);
+  }, [reports]);
 
   return (
     <div

@@ -33,13 +33,15 @@ function MapPage() {
     try {
       const response = await fetch("http://localhost:3000/fetch_reports");
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("error fetching reports");
       }
+      
       const data = await response.json();
-      if (!data.reports || !Array.isArray(data.reports)) {
-        throw new Error("Invalid data structure received from backend");
-      }
-      setReports(data.reports);
+      console.log("Reports fetched:", data[0].location.latitude);
+      // if (!data.reports || !Array.isArray(data.reports)) {
+      //   throw new Error("Invalid data structure received from backend");
+      // }
+      setReports(data);
     } catch (err: unknown) {
       setError((err as Error).message);
       console.error("Error fetching reports:", err);
@@ -58,7 +60,7 @@ function MapPage() {
     <div
       className="min-h-screen flex flex-col p-8"
       style={{
-        backgroundImage: `url('/your-background-image.png')`,
+        // backgroundImage: url('/your-background-image.png'),
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -109,4 +111,4 @@ function MapPage() {
 }
 
 export default MapPage;
-  
+

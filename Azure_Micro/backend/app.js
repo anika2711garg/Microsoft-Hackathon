@@ -249,31 +249,6 @@ const getAccessToken = async () => {
   return response.data;
 };
 
-//   const uploadVideoToIndexer = async (videoUrl) => {
-//   const accessToken = await getAccessToken();
-//   const endpoint = `https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${accessToken}`;
-
-//   const response = await axios.post(
-//     endpoint,
-//     {
-//       name: "My Video",
-//       description: "Uploaded via API",
-//       privacy: "Private",
-//       videoUrl,
-//     },
-//     {
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   );
-
-//   console.log("Video uploaded successfully:", response.data);
-//   return response.data;
-// };
-
-// Report Submission API
-
 app.post("/uploadToVideoIndexer", async (req, res) => {
   try {
     const { videoUrl } = req.body;
@@ -311,54 +286,53 @@ app.post("/uploadToVideoIndexer", async (req, res) => {
   }
 });
 
-app.post(
-  "/report",
-  upload.fields([{ name: "image" }, { name: "audio" }]),
-  async (req, res) => {
-    try {
-      const { severity, destruction_type, description, latitude, longitude } =
-        req.body;
+app.listen(port, () => console.log(`Server running on port ${port}`));
+// Report Submission API
+app.post("/report", upload.fields([{ name: "image" }, { name: "audio" }]), async (req, res) => {
+  try {
+    const { severity, destruction_type, description, lat, lng } = req.body;
+    console.log(req.body)
+    let imageCaption = null;
+    let audioTranscription = null;
 
-      let imageCaption = null;
-      let audioTranscription = null;
-
-      // Analyze Image if provided
-      if (req.files?.image) {
-        imageCaption = await analyzeImage(req.files.image[0].buffer);
-        imageCaption = imageCaption.map((caption) => caption.text).join("\n");
-      }
-
-      console.log("The image description:", imageCaption);
-
-      // Process Audio if provided
-      if (req.files?.audio) {
-        console.log("Processing audio for transcription...");
-        audioTranscription = await processAudio(req.files.audio[0].buffer);
-        console.log("Audio transcription completed:", audioTranscription);
-      }
-
-      // Create report after both tasks are completed
-      const report = new Report({
-        location: { latitude, longitude },
-        severity,
-        destruction_type,
-        description,
-        media: {
-          text: description,
-          image_description: imageCaption,
-          audio_transcription: audioTranscription,
-        },
-      });
-
-      await report.save();
-      console.log("Report saved successfully!");
-
-      res.json({ success: true, report });
-    } catch (error) {
-      console.error("Error submitting report:", error);
-      res.status(500).json({ error: "Failed to submit report" });
+    // Analyze Image if provided
+    if (req.files?.image) {
+      imageCaption = await analyzeImage(req.files.image[0].buffer);
+      imageCaption = imageCaption.map(caption => caption.text).join("\n")
     }
+
+    console.log("The image description:", imageCaption);
+
+    // Process Audio if provided
+    if (req.files?.audio) {
+      console.log("Processing audio for transcription...");
+      audioTranscription = await processAudio(req.files.audio[0].buffer);
+      console.log("Audio transcription completed:", audioTranscription);
+    }
+
+    // Create report after both tasks are completed
+    const report = new Report({
+      location: { latitude: lat, longitude: lng },
+      severity,
+      destruction_type,
+      description,
+      media: {
+        text: description,
+        image_description: imageCaption,
+        audio_transcription: audioTranscription,
+      },
+    });
+
+    await report.save();
+    console.log("Report saved successfully!");
+
+    res.json({ success: true, report });
+
+  } catch (error) {
+    console.error("Error submitting report:", error);
+    res.status(500).json({ error: "Failed to submit report" });
   }
-);
+});
+
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
