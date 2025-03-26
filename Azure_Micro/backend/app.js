@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const fs = require("fs");
 const sdk = require("microsoft-cognitiveservices-speech-sdk");
 const app = express();
+const cors = require("cors")
 const port = 3000;
 const speech = require("microsoft-cognitiveservices-speech-sdk");
 // const fs = require("fs");
@@ -17,6 +18,7 @@ const ENDPOINT = process.env.AZURE_COMPUTER_VISION_ENDPOINT;
 const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY;
 const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION;
 const MONGO_URI = process.env.MONGODB_URI;
+app.use(cors())
 
 // MongoDB Connection
 mongoose.connect(MONGO_URI, {
@@ -45,7 +47,7 @@ const ReportSchema = new mongoose.Schema({
   location: {
     latitude: Number,
     longitude: Number,
-    address: String,
+    
   },
   severity: String,
   destruction_type: String,
@@ -155,8 +157,8 @@ app.get("/fetch_reports", async (req, res) => {
 // Report Submission API
 app.post("/report", upload.fields([{ name: "image" }, { name: "audio" }]), async (req, res) => {
   try {
-    const { severity, destruction_type, description, latitude, longitude } = req.body;
-
+    const { severity, destruction_type, description, lat, lng } = req.body;
+    console.log(req.body)
     let imageCaption = null;
     let audioTranscription = null;
 
@@ -177,7 +179,7 @@ app.post("/report", upload.fields([{ name: "image" }, { name: "audio" }]), async
 
     // Create report after both tasks are completed
     const report = new Report({
-      location: { latitude, longitude },
+      location: { latitude: lat, longitude: lng },
       severity,
       destruction_type,
       description,
