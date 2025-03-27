@@ -6,6 +6,9 @@ import mongoose from "mongoose";
 import fs from "fs";
 import sdk from "microsoft-cognitiveservices-speech-sdk";
 import cors from "cors";
+import path from "path";
+import ffmpeg from "fluent-ffmpeg";
+import { fileURLToPath } from "url";
 import {
   BlobServiceClient,
   StorageSharedKeyCredential,
@@ -13,6 +16,7 @@ import {
   BlobSASPermissions,
 } from "@azure/storage-blob";
 import speech from "microsoft-cognitiveservices-speech-sdk";
+import { getAccessToken } from "./utils/generateAccessToken.js";
 // Configure dotenv
 dotenv.config();
 
@@ -65,7 +69,6 @@ const ReportSchema = new mongoose.Schema({
     audio_transcription: String,
   },
 });
-
 
 const Report = mongoose.model("Report", ReportSchema);
 
@@ -163,6 +166,63 @@ app.get("/fetch_reports", async (req, res) => {
   }
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+ffmpeg.setFfmpegPath("C:/Users/HP/OneDrive/Documents/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
+
+app.post("/convert-to-wav", upload.single("audio"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const tempInputPath = path.join(__dirname, "uploads", `${Date.now()}_input`);
+  const tempOutputPath = path.join(
+    __dirname,
+    "uploads",
+    `${Date.now()}_output.wav`
+  );
+
+ const uploadsDir = path.join(__dirname, "uploads");
+ if (!fs.existsSync(uploadsDir)) {
+   fs.mkdirSync(uploadsDir, { recursive: true });
+ }
+
+
+  // Write the buffer to a temporary file
+  fs.writeFileSync(tempInputPath, req.file.buffer);
+
+  ffmpeg(tempInputPath)
+    .toFormat("wav")
+    .on("start", (cmd) => {
+      console.log("FFmpeg command:", cmd);
+    })
+    .on("progress", (progress) => {
+      console.log("Processing progress:", progress);
+    })
+    .on("end", () => {
+      console.log("Conversion complete.");
+      res.download(tempOutputPath, "converted_audio.wav", (err) => {
+        if (err) {
+          console.error("Error during file download:", err);
+        }
+        fs.unlinkSync(tempInputPath);
+        fs.unlinkSync(tempOutputPath);
+      });
+    })
+    .on("error", (err) => {
+      console.error("FFmpeg error:", err.message);
+      res.status(500).send("Error processing audio file");
+      if (fs.existsSync(tempInputPath)) {
+        fs.unlinkSync(tempInputPath);
+      }
+      if (fs.existsSync(tempOutputPath)) {
+        fs.unlinkSync(tempOutputPath);
+      }
+    })
+    .save(tempOutputPath);
+
+});
+
 const ACCOUNT_NAME = "videoin";
 const ACCOUNT_KEY =
   "jjemQqFOcqj7ekLpVnyzhH7zbW1NJZySlGAT89cNhWJ0ZmZbPTgEuJt3W6NLK+iX13gzcdQrFl02+AStpLUXJA==";
@@ -232,24 +292,24 @@ function generateBlobSAS(blobName, containerName, accountName, accountKey) {
   ).toString();
 }
 
-const VIDEO_INDEXER_API_KEY = process.env.AZURE_VIDEO_INDEXER_API_KEY;
-const ACCOUNT_ID = process.env.ACCOUNT_ID;
-const LOCATION = process.env.LOCATION;
+const VIDEO_INDEXER_API_KEY = "cafee043-0ec8-44e5-91ab-65a1afad5a91";
+const ACCOUNT_ID = "438cda5a-251f-4c17-8415-d9579ac378b0";
+const LOCATION = "eastus";
 
-const getAccessToken = async () => {
-  const response = await axios.post(
-    `https://api.videoindexer.ai/Auth/${LOCATION}/Accounts/${ACCOUNT_ID}/AccessToken`,
-    null,
-    {
-      headers: {
-        "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
-      },
-    }
-  );
-  console.log("Access Token:", response.data);
+// const getAccessToken = async () => {
+//   const response = await axios.post(
+//     `https://api.videoindexer.ai/Auth/${LOCATION}/Accounts/${ACCOUNT_ID}/AccessToken`,
+//     null,
+//     {
+//       headers: {
+//         "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
+//       },
+//     }
+//   );
+//   console.log("Access Token:", response.data);
 
-  return response.data;
-};
+//   return response.data;
+// };
 
 //   const uploadVideoToIndexer = async (videoUrl) => {
 //   const accessToken = await getAccessToken();
@@ -278,91 +338,147 @@ const getAccessToken = async () => {
 
 app.post("/uploadToVideoIndexer", async (req, res) => {
   try {
-    const { videoUrl } = req.body;
+    const { videoUrl, fileName } = req.body;
     console.log("Received body:", req.body);
 
-    const videoIndexerAccessToken = await getAccessToken();
-
-    console.log("Video Indexer Access Token:", videoIndexerAccessToken);
-
-    if (!videoUrl) {
-      return res.status(400).json({ message: "Video URL is required" });
+    if (!videoUrl || !fileName) {
+      return res
+        .status(400)
+        .json({ message: "Video URL and file name are required" });
     }
 
-    const uploadUrl = `https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${videoIndexerAccessToken}&name=${encodeURIComponent(
-      "Uploaded Video"
-    )}&description=${encodeURIComponent("Video uploaded via API")}`;
+    const videoIndexerAccessToken =
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMDM2MDc4LCJleHAiOjE3NDMwMzk5NzgsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.GuDoXdBzUf0Sg1T3tnHwNZwF-BY5t-p8i22J5UlIMeAVC-ilpkA0D9tCF3oHMXUxRc1o9zkmdlC7U-afCCz41HWXuMT8uB4UjFGlW5aSamxF6dECxIysHeA1eOHmcMDlyLuCbztLyo5USJwOpCGte6Uz9pRr-WkqyyN-yg-5ihUP0v5y7kdELpO-oCC1YsAv2iAp4esWTMB1fnp4wnwqcdU52Eez3qJ_ZnQJCiyKgakgOo_0mrF6Lv55FvoTLCZCM4NdRD8xD8bwvJU-TjK2Dvod0beQ5sEEJmk7OrNRrShDTiPcTYbWUlPnf8Iy_xaicJ2jvR4Qs-BCbrGphiO2Kw";
+    // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
 
+    // Construct the URL with query parameters
+    const uploadUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos?accessToken=${encodeURIComponent(
+      videoIndexerAccessToken
+    )}&name=fire&privacy=Private&language=English&videoUrl=${encodeURIComponent(
+      videoUrl
+    )}&fileName=${encodeURIComponent(
+      fileName
+    )}&isSearchable=true&indexingPreset=Default&streamingPreset=Default&sendSuccessEmail=false&useManagedIdentityToDownloadVideo=false&preventDuplicates=false`;
+
+    // Make the POST request
     const response = await axios.post(uploadUrl, null, {
       headers: {
-        "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
+        Authorization: `Bearer ${videoIndexerAccessToken}`,
         "Content-Type": "application/json",
-      },
-      params: {
-        videoUrl,
       },
     });
 
+    // Send response back to the client
     res.status(200).json({
       message: "Video uploaded to Azure Video Indexer successfully",
       data: response.data,
     });
+    console.log("Video uploaded to Azure Video Indexer successfully", response.data);
+    
   } catch (error) {
-    console.error("Error uploading video to Azure Video Indexer:", error);
-    res.status(500).json({ message: "Error uploading video", error });
+    console.error(
+      "Error uploading video to Azure Video Indexer:",
+      error.response?.data || error.message
+    );
+
+    res
+      .status(500)
+      .json({
+        message: "Error uploading video",
+        error: error.response?.data || error.message,
+      });
   }
 });
 
-app.post(
-    "/report",
-    upload.fields([{ name: "image" }, { name: "audio" }]),
-    async (req, res) => {
-      try {
-        const { severity, address,peopleAffected,destruction_type, description, lat, lng } = req.body;
-        console.log(req.body);
-        let imageCaption = null;
-        let audioTranscription = null;
-  
-        // Analyze Image if provided
-        if (req.files?.image) {
-          imageCaption = await analyzeImage(req.files.image[0].buffer);
-          imageCaption = imageCaption.map((caption) => caption.text).join("\n");
-        }
-  
-        console.log("The image description:", imageCaption);
-  
-        // Process Audio if provided
-        if (req.files?.audio) {
-          console.log("Processing audio for transcription...");
-          audioTranscription = await processAudio(req.files.audio[0].buffer);
-          console.log("Audio transcription completed:", audioTranscription);
-        }
-  
-        // Create report after both tasks are completed
-        const report = new Report({
-          location: { latitude: lat, longitude: lng, address: address },
-          severity,
-          destruction_type,
-          address,
-          peopleAffected: peopleAffected,
-          description,
-          media: {
-            text: description,
-            image_description: imageCaption,
-            audio_transcription: audioTranscription,
-          },
-        });
-  
-        await report.save();
-        console.log("Report saved successfully!");
-  
-        res.json({ success: true, report });
-      } catch (error) {
-        console.error("Error submitting report:", error);
-        res.status(500).json({ error: "Failed to submit report" });
-      }
+app.get("/getVideoInsights/:videoId", async (req, res) => {
+  try {
+    const videoId = req.params.videoId;
+
+    if (!videoId) {
+      return res.status(400).json({ message: "Video ID is required" });
     }
-  );
-  
+
+    const videoIndexerAccessToken =
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMDM2MDc4LCJleHAiOjE3NDMwMzk5NzgsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.GuDoXdBzUf0Sg1T3tnHwNZwF-BY5t-p8i22J5UlIMeAVC-ilpkA0D9tCF3oHMXUxRc1o9zkmdlC7U-afCCz41HWXuMT8uB4UjFGlW5aSamxF6dECxIysHeA1eOHmcMDlyLuCbztLyo5USJwOpCGte6Uz9pRr-WkqyyN-yg-5ihUP0v5y7kdELpO-oCC1YsAv2iAp4esWTMB1fnp4wnwqcdU52Eez3qJ_ZnQJCiyKgakgOo_0mrF6Lv55FvoTLCZCM4NdRD8xD8bwvJU-TjK2Dvod0beQ5sEEJmk7OrNRrShDTiPcTYbWUlPnf8Iy_xaicJ2jvR4Qs-BCbrGphiO2Kw";
+    // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
+
+    const insightsUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos/${videoId}/Index?reTranslate=false&includeStreamingUrls=true&includeSummarizedInsights=true`;
+
+    const response = await axios.get(insightsUrl, {
+      headers: {
+        Authorization: `Bearer ${videoIndexerAccessToken}`,
+      },
+    });
+
+    res.status(200).json({
+      message: "Video insights retrieved successfully",
+      data: response.data,
+    });
+  } catch (error) {
+    console.error("Error retrieving video insights:", error);
+    res.status(500).json({ message: "Error retrieving video insights", error });
+  }
+});
+
+
+
+app.post(
+  "/report",
+  upload.fields([{ name: "image" }, { name: "audio" }]),
+  async (req, res) => {
+    try {
+      const {
+        severity,
+        address,
+        peopleAffected,
+        destruction_type,
+        description,
+        lat,
+        lng,
+      } = req.body;
+      console.log(req.body);
+      let imageCaption = null;
+      let audioTranscription = null;
+
+      // Analyze Image if provided
+      if (req.files?.image) {
+        imageCaption = await analyzeImage(req.files.image[0].buffer);
+        imageCaption = imageCaption.map((caption) => caption.text).join("\n");
+      }
+
+      console.log("The image description:", imageCaption);
+
+      // Process Audio if provided
+      if (req.files?.audio) {
+        console.log("Processing audio for transcription...");
+        audioTranscription = await processAudio(req.files.audio[0].buffer);
+        console.log("Audio transcription completed:", audioTranscription);
+      }
+
+      // Create report after both tasks are completed
+      const report = new Report({
+        location: { latitude: lat, longitude: lng, address: address },
+        severity,
+        destruction_type,
+        address,
+        peopleAffected: peopleAffected,
+        description,
+        media: {
+          text: description,
+          image_description: imageCaption,
+          audio_transcription: audioTranscription,
+        },
+      });
+
+      await report.save();
+      console.log("Report saved successfully!");
+
+      res.json({ success: true, report });
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      res.status(500).json({ error: "Failed to submit report" });
+    }
+  }
+);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
