@@ -59,6 +59,8 @@ const ReportSchema = new mongoose.Schema({
     longitude: Number,
   },
   severity: String,
+  videoURL: String,
+  videoID: String,
   destruction_type: String,
   description: String,
   address: String,
@@ -474,6 +476,8 @@ app.post(
     try {
       const {
         severity,
+        videoURL,
+        videoID,
         address,
         peopleAffected,
         destruction_type,
@@ -506,6 +510,8 @@ app.post(
         severity,
         destruction_type,
         address,
+        videoURL,
+        videoID,
         peopleAffected: peopleAffected,
         description,
         media: {
