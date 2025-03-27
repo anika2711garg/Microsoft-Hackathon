@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, AlertTriangle } from "lucide-react";
 import axios from "axios";
-
+import DetailPage from "./DetailPage";
+import { useNavigate } from "react-router-dom";
+// import DetailPage from "./DetailPage";
 function DashboardPage() {
+  const navigate = useNavigate()
   const dashboardRef = useRef(null);
   interface Report {
+    _id: string;
+    address: string;
     destruction_type: string;
     location: {
       latitude: number;
@@ -47,7 +52,7 @@ function DashboardPage() {
         console.log("report is",report),
         (selectedType ? report.destruction_type?.toLowerCase() === selectedType.toLowerCase() : true) &&
         (selectedLocation
-          ? `${report.location?.latitude || ""}, ${report.location?.longitude || ""}`
+          ? `${report.address}`
               .toLowerCase()
               .includes(selectedLocation.toLowerCase())
           : true) &&
@@ -145,7 +150,8 @@ function DashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                     
-                      {report.location ? `${report.location.latitude}, ${report.location.longitude}` : "Location not available"}
+                      {/* {report.location ? `${report.location.latitude}, ${report.location.longitude}` : "Location not available"} */}
+                      {report.address ? report.address : "Address not available"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(report.timestamp).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -154,8 +160,16 @@ function DashboardPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button className="text-indigo-400 hover:text-indigo-500 transition">View Details</button>
-                    </td>
+      <button
+        onClick={() => navigate(`/reports/${report._id}`)}
+        className="text-indigo-400 hover:text-indigo-500 transition"
+      >
+        View Details
+      </button>
+    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button  className="text-indigo-400 hover:text-indigo-500 transition">View Details</button>
+                    </td> */}
                   </tr>
                 ))
               ) : (

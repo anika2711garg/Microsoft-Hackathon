@@ -163,6 +163,21 @@ const emailClient = new EmailClient(
   process.env.COMMUNICATION_SERVICES_CONNECTION_STRING
 );
 
+app.get("/fetch_report/:reportId", async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const report = await Report.findById(reportId);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: "Report not found" });
+    }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error("Error fetching report:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 app.post("/send-email", async (req, res) => {
   try {
     const { to, subject, text, html } = req.body;
@@ -198,7 +213,7 @@ app.get("/fetch_reports", async (req, res) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-ffmpeg.setFfmpegPath("C:/Users/HP/OneDrive/Documents/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
+ffmpeg.setFfmpegPath("D:/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
 
 app.post("/convert-to-wav", upload.single("audio"), (req, res) => {
   if (!req.file) {
