@@ -175,6 +175,20 @@ function HomePage() {
         }
       );
       console.log("Report submitted successfully:", response.data);
+      const emailData = {
+        reporterName: "John Doe", // Replace with actual reporter's name
+        location: address,
+        disasterType: disasterType,
+        description: description,
+    };
+
+    await fetch("http://localhost:7071/api/sendEmailTrigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Origin": "http://localhost:5173" },
+        body: JSON.stringify(emailData),
+    });
+
+    console.log("Email notification sent successfully");
     } catch (error) {
       console.error("Error submitting report:", error);
     }
