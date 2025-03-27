@@ -15,6 +15,8 @@ function HomePage() {
 
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [videoId, setVideoId] = useState(""); 
+  const [insights, setInsights] = useState(null); 
 
   
   const handleFileChange = async (
@@ -38,6 +40,7 @@ function HomePage() {
           const data = await response.json();
           publicUrl = data.publicUrl;
           setUploadStatus(`Upload successful! File URL: ${data.publicUrl}`);
+          console.log("File uploaded to Blob Storage:", data.publicUrl);
         } else {
           const error = await response.json();
           setUploadStatus(`Error: ${error.message}`);
@@ -56,7 +59,8 @@ function HomePage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              videoUrl: publicUrl,
+              videoUrl: publicUrl, // The public URL of the video
+              fileName: "london-eye.mp4",
             }),
           }
         );
@@ -70,6 +74,7 @@ function HomePage() {
         setUploadStatus(
           `Video successfully indexed! Indexer ID: ${indexerData.data.id}`
         );
+        setVideoId(indexerData.data.id);
       } catch (error) {
         console.error("Error uploading file:", error);
         setUploadStatus("Error uploading file.");
@@ -79,6 +84,32 @@ function HomePage() {
     }
   };
 
+  const handleGetInsights = async () => {
+    if (!videoId) {
+      setUploadStatus("No video ID available to fetch insights.");
+      return;
+    }
+
+    try {
+      setUploadStatus("Fetching insights...");
+      const response = await fetch(
+        `http://localhost:3000/getVideoInsights/${videoId}`
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      const data = await response.json();
+      setInsights(data.data); // Save the retrieved insights
+      setUploadStatus("Insights fetched successfully!");
+      console.log("Video insights:", data.data);
+    } catch (error) {
+      console.error("Error fetching video insights:", error);
+      setUploadStatus("Error fetching video insights.");
+    }
+  };
 
   const [disasterType, setDisasterType] = useState("");
   const [description,setDescription] = useState("")
@@ -419,6 +450,19 @@ function HomePage() {
           >
             Submit Report
           </button>
+
+          <button
+            onClick={handleGetInsights}
+            className="w-full bg-green-500 hover:bg-green-600 text-black font-medium py-4 rounded-lg shadow-lg transition-all"
+          >
+            Get Insights
+          </button>
+          {insights && (
+            <div>
+              <h2>Video Insights</h2>
+              <pre>{JSON.stringify(insights, null, 2)}</pre>
+            </div>
+          )}
         </form>
       </div>
     </div>
