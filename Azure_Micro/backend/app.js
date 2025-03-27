@@ -326,46 +326,6 @@ const VIDEO_INDEXER_API_KEY = "cafee043-0ec8-44e5-91ab-65a1afad5a91";
 const ACCOUNT_ID = "438cda5a-251f-4c17-8415-d9579ac378b0";
 const LOCATION = "eastus";
 
-// const getAccessToken = async () => {
-//   const response = await axios.post(
-//     `https://api.videoindexer.ai/Auth/${LOCATION}/Accounts/${ACCOUNT_ID}/AccessToken`,
-//     null,
-//     {
-//       headers: {
-//         "Ocp-Apim-Subscription-Key": VIDEO_INDEXER_API_KEY,
-//       },
-//     }
-//   );
-//   console.log("Access Token:", response.data);
-
-//   return response.data;
-// };
-
-//   const uploadVideoToIndexer = async (videoUrl) => {
-//   const accessToken = await getAccessToken();
-//   const endpoint = https://api.videoindexer.ai/${LOCATION}/Accounts/${ACCOUNT_ID}/Videos?accessToken=${accessToken};
-
-//   const response = await axios.post(
-//     endpoint,
-//     {
-//       name: "My Video",
-//       description: "Uploaded via API",
-//       privacy: "Private",
-//       videoUrl,
-//     },
-//     {
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//     }
-//   );
-
-//   console.log("Video uploaded successfully:", response.data);
-//   return response.data;
-// };
-
-// Report Submission API
-
 app.post("/uploadToVideoIndexer", async (req, res) => {
   try {
     const { videoUrl, fileName } = req.body;
