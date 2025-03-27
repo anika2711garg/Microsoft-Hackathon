@@ -25,7 +25,8 @@ function DashboardPage() {
     const fetchReports = async () => {
       try {
         const response = await axios.get("http://localhost:3000/fetch_reports"); // Adjust API endpoint
-        const data = response.data;
+        console.log(response.data);
+        const data = Array.isArray(response.data.reports) ? response.data.reports : [];
         console.log("Reports fetched:", data);
         setReports(data);
         setFilteredReports(data);
@@ -38,20 +39,23 @@ function DashboardPage() {
 
   // Filter reports based on search input and selected filters
   useEffect(() => {
+    console.log("reports are",reports);
     let filtered = reports.filter((report) => {
+      console.log("report is",report);
       return (
-        console.log(report),
-        (selectedType ? report.destruction_type.toLowerCase() === selectedType.toLowerCase() : true) &&
+
+        console.log("report is",report),
+        (selectedType ? report.destruction_type?.toLowerCase() === selectedType.toLowerCase() : true) &&
         (selectedLocation
-          ? `${report.location.latitude}, ${report.location.longitude}`
+          ? `${report.location?.latitude || ""}, ${report.location?.longitude || ""}`
               .toLowerCase()
               .includes(selectedLocation.toLowerCase())
           : true) &&
-        (selectedDate ? report.timestamp.startsWith(selectedDate) : true) &&
+        (selectedDate ? report.timestamp?.startsWith(selectedDate) : true) &&
         (searchQuery
-          ? report.destruction_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            `${report.location.latitude}, ${report.location.longitude}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            report.timestamp.includes(searchQuery)
+          ? report.destruction_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            `${report.location?.latitude || ""}, ${report.location?.longitude || ""}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            report.timestamp?.includes(searchQuery)
           : true)
       );
     });
@@ -140,7 +144,8 @@ function DashboardPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {report.location.latitude}, {report.location.longitude}
+                    
+                      {report.location ? `${report.location.latitude}, ${report.location.longitude}` : "Location not available"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{new Date(report.timestamp).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">

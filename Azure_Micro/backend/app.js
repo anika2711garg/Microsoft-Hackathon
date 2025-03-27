@@ -153,6 +153,36 @@ async function processAudio(audioBuffer) {
   }
 }
 
+import pkg from "@azure/communication-email";
+const { EmailClient, EmailMessage, EmailContent } = pkg;
+
+const emailClient = new EmailClient(
+  process.env.COMMUNICATION_SERVICES_CONNECTION_STRING
+);
+
+app.post("/send-email", async (req, res) => {
+  try {
+    const { to, subject, text, html } = req.body;
+    console.log(req.body)
+    const emailMessage = {
+      senderAddress: "DoNotReply@eb41ba9b-8e3e-4a28-be4b-27cc77a74414.azurecomm.net",
+      content: {
+        subject: subject,
+        plainText: text,
+        html: html
+      },
+      recipients: {
+        to: [{ address: to }]
+      }
+    };
+
+    const emailSendOperation = await emailClient.beginSend(emailMessage);
+    res.json({ success: true, operationId: emailSendOperation.id });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 app.get("/fetch_reports", async (req, res) => {
   try {
     const reports = await Report.find();
