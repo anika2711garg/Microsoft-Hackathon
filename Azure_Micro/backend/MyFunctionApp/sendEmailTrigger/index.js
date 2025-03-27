@@ -50,7 +50,7 @@ module.exports = async function (context, req) {
             },
             recipients: {
                 to: [
-                    { address: "anshnew41@gmail.com" },  // Change to authorities' emails
+                    { address: "yshivhare413@gmail.com" },  // Change to authorities' emails
                     { address: "anshgup444@gmail.com" }
                 ]
             }
