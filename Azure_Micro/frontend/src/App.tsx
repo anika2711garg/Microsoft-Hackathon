@@ -8,6 +8,8 @@ import NotificationsPage from './pages/NotificationsPage';
 // import dis from './assets/dis_3.gif';
 import alert from './assets/alert.png';
 import DetailPage from './pages/DetailPage';
+import Home from './pages/Home';
+import About from './pages/About';
 
 function App() {
   return (
@@ -26,11 +28,13 @@ function App() {
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/HomePage" element={<HomePage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/reports/:reportId" element={<DetailPage />} />
+            <Route path="/" element={<Home />} />
+            <Route path="about" element={<About/>} />
           </Routes>
         </main>
       </div>
