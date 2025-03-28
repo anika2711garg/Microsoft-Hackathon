@@ -1,4 +1,4 @@
-# 🌍 Disaster Management System 🚨
+# 🌍 CrisisConnect 🚨
 
 ## Overview
 The Disaster Management System is a cloud-based platform that allows users to report disasters efficiently. It leverages various Azure services to analyze, process, and notify relevant authorities in real-time.
