@@ -1,119 +1,93 @@
-import { useEffect, useState } from 'react';
-import { Bell, Settings, CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { CheckCircle, XCircle, Mail, MapPin, Bell, User } from "lucide-react";
 
-// Mock Azure API Simulation
-const fetchNotifications = async () => {
-  return [
-    {
-      id: 1,
-      title: 'Fire Alert - Downtown',
-      status: 'success',
-      message: 'Sent to Fire Department',
-      time: '2 minutes ago'
-    },
-    {
-      id: 2,
-      title: 'Flood Warning - Riverside',
-      status: 'failed',
-      message: 'Failed to send',
-      time: '15 minutes ago'
+const NotificationList = () => {
+    interface Notification {
+        id: string;
+        disasterType: string;
+        location: string;
+        description: string;
+        reporterName: string;
+        timestamp: string;
+        status: string;
     }
-  ];
-};
 
-function NotificationsPage() {
-  const [notifications, setNotifications] = useState<{ id: number; title: string; status: string; message: string; time: string }[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  useEffect(() => {
-    const loadNotifications = async () => {
-      const data = await fetchNotifications();
-      setNotifications(data);
+    const fetchNotifications = async () => {
+        try {
+            const response = await fetch("http://localhost:7071/api/getNotifications");
+            if (!response.ok) throw new Error("Failed to fetch notifications");
+            
+            const data = await response.json();
+            console.log("Notifications are:", data);
+            return Array.isArray(data.notifications) ? data.notifications : [];
+        } catch (error) {
+            console.error("Error fetching notifications:", error);
+            return [];
+        }
     };
 
-    loadNotifications();
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await fetchNotifications();
+            console.log("Data before setting state:", data);
+            setNotifications(Array.isArray(data) ? data : []);
+        };
 
-    const interval = setInterval(loadNotifications, 10000); // Refresh every 10 seconds
-    return () => clearInterval(interval);
-  }, []);
+        fetchData();
+        const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+        return () => clearInterval(interval);
+    }, []);
 
-  return (
-    <div
-      className="min-h-screen p-8 flex flex-col"
-      style={{ backgroundImage: `url('/your-background-image.png')`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-    >
-      {/* Header Section */}
-      <div className="flex justify-between items-center mb-6 bg-black/60 p-4 rounded-xl shadow-lg backdrop-blur-md">
-        <h1 className="text-3xl font-bold text-white">Notifications & Alerts</h1>
-        <button className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow transition-all">
-          <Settings size={20} />
-          <span>Alert Settings</span>
-        </button>
-      </div>
+    useEffect(() => {
+        console.log("Notifications updated state:", notifications);
+    }, [notifications]);
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recent Alerts Section */}
-        <div className="bg-black/60 p-6 rounded-xl shadow-lg backdrop-blur-md">
-          <h2 className="text-xl font-semibold mb-4 flex items-center text-white">
-            <Bell className="mr-2" size={24} />
-            Recent Alerts
-          </h2>
+    return (
+        <div className="max-w-3xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-xl">
+            <h2 className="text-2xl font-bold text-blue-400 flex items-center mb-6">
+                <Bell className="mr-2" /> Sent Notifications
+            </h2>
 
-          <div className="space-y-4">
-            {notifications.map((alert) => (
-              <div
-                key={alert.id}
-                className={`border-l-4 pl-4 py-2 ${
-                  alert.status === 'success' ? 'border-green-400' : 'border-red-400'
-                } text-white`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{alert.title}</p>
-                    <p className="text-sm text-gray-300">{alert.message}</p>
-                  </div>
-                  {alert.status === 'success' ? (
-                    <CheckCircle className="text-green-400" size={20} />
-                  ) : (
-                    <XCircle className="text-red-400" size={20} />
-                  )}
-                </div>
-                <p className="text-sm text-gray-400 mt-1">{alert.time}</p>
-                {alert.status === 'failed' && (
-                  <button className="text-sm text-yellow-400 hover:text-yellow-500 mt-1">
-                    Retry Sending
-                  </button>
+            <div className="space-y-6">
+                {notifications.length > 0 ? (
+                    notifications.map((alert) => (
+                        <div
+                            key={alert.id}
+                            className="border-l-4 border-blue-500 p-5 bg-gray-800 rounded-lg shadow-md transition transform hover:scale-105"
+                        >
+                            <div className="flex items-center justify-between">
+                                <p className="text-xl font-semibold text-blue-300 flex items-center">
+                                    <MapPin className="mr-2 text-yellow-400" /> {alert.disasterType} at {alert.location}
+                                </p>
+                                {alert.status === "sent" ? (
+                                    <CheckCircle className="text-green-400 animate-pulse" size={24} />
+                                ) : (
+                                    <XCircle className="text-red-400" size={24} />
+                                )}
+                            </div>
+
+                            <p className="text-sm text-gray-300 mt-2">{alert.description}</p>
+                            <p className="text-sm text-gray-400 flex items-center mt-1">
+                                <User className="mr-2 text-purple-400" /> Reported by: {alert.reporterName}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                🕒 {new Date(alert.timestamp).toLocaleString()}
+                            </p>
+
+                            {/* Email Notification Message */}
+                            <p className="mt-4 text-sm text-gray-300 flex items-center bg-gray-700 p-3 rounded-lg shadow">
+                                <Mail className="mr-2 text-yellow-400" /> Email notification sent to the <span className="text-yellow-300 font-bold mx-1">{alert.disasterType}</span> department.
+                            </p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-gray-400">No notifications sent yet.</p>
                 )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Alert Configuration Section */}
-        <div className="bg-black/60 p-6 rounded-xl shadow-lg backdrop-blur-md">
-          <h2 className="text-xl font-semibold mb-4 text-white">Alert Configuration</h2>
-
-          <div className="space-y-4 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Emergency Services Notifications</p>
-                <p className="text-sm text-gray-300">Send alerts to local emergency services</p>
-              </div>
-              <input type="checkbox" checked className="toggle-checkbox" />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">SMS Notifications</p>
-                <p className="text-sm text-gray-300">Send SMS alerts to registered numbers</p>
-              </div>
-              <input type="checkbox" checked className="toggle-checkbox" />
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
 
-export default NotificationsPage;
+export default NotificationList;

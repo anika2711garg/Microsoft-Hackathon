@@ -2,6 +2,14 @@
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true"
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AZURE_STORAGE_CONNECTION_STRING":"DefaultEndpointsProtocol=https;AccountName=fizagroupa6fe;AccountKey=+TzY3vr/54tugQiJ6qmw676O7BOWLjWUGCX/Q5SQb0c5WiQW5Uape9bUM+MQvKAcxJn1Xi7mK557+ASt/5nt0A==;EndpointSuffix=core.windows.net"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORS_ALLOWED_ORIGINS": [
+      "http://localhost:5173"
+      
+    ]
   }
 }

@@ -164,7 +164,6 @@ function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
               </p>
             </div>
           </HoverCardContent>
-        </HoverCard>
       </div>
     );
   };
