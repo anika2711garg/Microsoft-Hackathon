@@ -31,7 +31,6 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/reports/:reportId" element={<DetailPage />} />
-
           </Routes>
         </main>
       </div>

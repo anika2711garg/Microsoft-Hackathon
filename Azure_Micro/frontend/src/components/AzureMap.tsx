@@ -5,6 +5,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { useNavigate } from "react-router-dom";
 
 interface Report {
   location?: {
@@ -24,6 +25,7 @@ interface Report {
 }
 
 function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
+  const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<atlas.Map | null>(null);
   const [hoverData, setHoverData] = useState<{
@@ -133,38 +135,40 @@ function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
           setShowHoverCard(false);
         }}
       >
-        <HoverCard>
-          <HoverCardTrigger>
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                backgroundColor: "blue",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-            ></div>
-          </HoverCardTrigger>
-          <HoverCardContent>
-            <div className="p-4 bg-white rounded-lg shadow-md text-gray-800">
-              <h3 className="font-bold text-lg mb-2 text-red-600">
-                Severity: {properties.severity }
-              </h3>
-              <p className="text-sm mb-1">
-                <span className="font-semibold">Description:</span>{" "}
-                {properties.description}
-              </p>
-              <p className="text-sm mb-1">
-                <span className="font-semibold">Destruction Type:</span>{" "}
-                {properties.destruction_type}
-              </p>
-              <p className="text-sm">
-                <span className="font-semibold">Timestamp:</span>{" "}
-                {new Date(properties.timestamp).toLocaleString()}
-              </p>
-            </div>
-          </HoverCardContent>
+        <div onClick={() => navigate(`/reports/${properties.id}`)}>
+          <HoverCard>
+            <HoverCardTrigger>
+              <div
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  backgroundColor: "blue",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                }}
+              ></div>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              <div className="p-4 bg-white rounded-lg shadow-md text-gray-800">
+                <h3 className="font-bold text-lg mb-2 text-red-600">
+                  Severity: {properties.severity}
+                </h3>
+                <p className="text-sm mb-1">
+                  <span className="font-semibold">Description:</span>{" "}
+                  {properties.description}
+                </p>
+                <p className="text-sm mb-1">
+                  <span className="font-semibold">Destruction Type:</span>{" "}
+                  {properties.destruction_type}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Timestamp:</span>{" "}
+                  {new Date(properties.timestamp).toLocaleString()}
+                </p>
+              </div>
+            </HoverCardContent>
           </HoverCard>
+        </div>
       </div>
     );
   };
