@@ -36,8 +36,7 @@ The Disaster Management System is a cloud-based platform that allows users to re
 
 ### 1. Clone the Repository 🖥️
 ```bash
-git clone https://github.com/your-repo/disaster-management.git
-cd disaster-management
+git clone https://github.com/anika2711garg/Microsoft-Hackathon.git
 ```
 
 ---
