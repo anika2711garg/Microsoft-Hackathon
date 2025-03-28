@@ -4,7 +4,7 @@ const About = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-white">
             {/* Header */}
-            <header className="text-center py-16 bg-blue-600">
+            <header className="text-center py-16 bg-blue-800">
                 <h1 className="text-5xl font-extrabold">About Us 🌍</h1>
                 <p className="text-lg text-gray-200 mt-4">
                     Dedicated to ensuring safety, disaster preparedness, and rapid response.

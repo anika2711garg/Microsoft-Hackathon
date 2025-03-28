@@ -5,7 +5,7 @@ const Home = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-white">
             {/* Hero Section */}
-            <header className="text-center py-16 bg-blue-600">
+            <header className="text-center py-16 bg-blue-800">
                 <h1 className="text-5xl font-extrabold">
                     Disaster Management System 🌍
                 </h1>
