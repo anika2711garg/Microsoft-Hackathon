@@ -12,13 +12,14 @@ function HomePage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const [peopleAffected, setPeopleAffected] = useState<number>(0);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
+  const [loading, setLoading] = useState<boolean>(false);
+const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
   const [videoId, setVideoId] = useState(""); 
   const [insights, setInsights] = useState(null); 
   const [publicURL, setPublicURL] = useState(""); // State to store the public URL of the uploaded video
-
+  const [imageName, setImageName] = useState<string | null>(null);
   
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -122,6 +123,8 @@ function HomePage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setImage(e.target.files[0]);
+      
+        setImageName(e.target.files[0].name); // Store the file name
     }
   };
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -191,11 +194,15 @@ function HomePage() {
         headers: { "Content-Type": "application/json", "Origin": "http://localhost:5173" },
         body: JSON.stringify(emailData),
     });
-
+    setSuccessMessage("Report submitted successfully!"); // Set success message
     console.log("Email notification sent successfully");
     } catch (error) {
       console.error("Error submitting report:", error);
+      setSuccessMessage("Error submitting report. Please try again.");
     }
+    finally {
+      setLoading(false);  // Stop loading after submission
+  }
   };
   
 
@@ -298,6 +305,10 @@ function HomePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Disaster Type */}
+          {loading && <p className="text-blue-500">Submitting...</p>}
+
+    {/* Success Message */}
+    {successMessage && <p className="text-green-500">{successMessage}</p>}
           <div>
             <label className="block text-white font-medium mb-2">
               Disaster Type
@@ -443,6 +454,7 @@ function HomePage() {
                 onChange={handleImageChange}
               />
             </label>
+            {imageName && <p className="mt-2 text-sm text-gray-300">{imageName}</p>}
           </div>
 
           {/* Recorded Audio */}
@@ -465,8 +477,9 @@ function HomePage() {
           <button
             type="submit"
             className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-medium py-4 rounded-lg shadow-lg transition-all"
+            disabled={loading}
           >
-            Submit Report
+           {loading ? "Submitting..." : "Submit Report"}
           </button>
 
           <button
