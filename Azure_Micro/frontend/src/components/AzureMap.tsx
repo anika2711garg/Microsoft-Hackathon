@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import * as atlas from "azure-maps-control";
-// import {
-//   HoverCard,
-//   HoverCardContent,
-//   HoverCardTrigger,
-// } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface Report {
   location?: {
@@ -133,7 +133,7 @@ function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
           setShowHoverCard(false);
         }}
       >
-        {/* <HoverCard>
+        <HoverCard>
           <HoverCardTrigger>
             <div
               style={{
@@ -164,7 +164,6 @@ function AzureMap({ reports }: { reports: Report[] }): JSX.Element {
               </p>
             </div>
           </HoverCardContent>
-        </HoverCard> */}
       </div>
     );
   };

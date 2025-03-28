@@ -1,12 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Filter, MapPin } from "lucide-react";
 import AzureMap from "../components/AzureMap";
+
+// Throttle function to limit the frequency of updates
+const useThrottle = (value: string, delay: number) => {
+  const [throttledValue, setThrottledValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setThrottledValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return throttledValue;
+};
 
 interface Report {
   location?: {
     latitude: number;
     longitude: number;
   };
+  address?: string;
   media: {
     text: string;
     image_description?: string | null;
@@ -27,22 +45,26 @@ const severityColors: Record<string, string> = {
 
 function MapPage() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+
+  // Throttle the search query to prevent excessive updates
+  const throttledSearchQuery = useThrottle(searchQuery, 300);
 
   const fetchReports = async () => {
     try {
       const response = await fetch("http://localhost:3000/fetch_reports");
-      
+
       if (!response.ok) {
-        throw new Error("error fetching reports");
+        throw new Error("Error fetching reports");
       }
-      
+
       const data = await response.json();
       console.log("Reports fetched:", data.reports);
-      // if (!data.reports || !Array.isArray(data.reports)) {
-      //   throw new Error("Invalid data structure received from backend");
-      // }
+
       setReports(data.reports);
+      setFilteredReports(data.reports); // Initialize filteredReports with all reports
     } catch (err: unknown) {
       setError((err as Error).message);
       console.error("Error fetching reports:", err);
@@ -53,6 +75,21 @@ function MapPage() {
     fetchReports();
   }, []);
 
+  // Update filtered reports when the throttled search query changes
+  useEffect(() => {
+    if (throttledSearchQuery.trim() === "") {
+      setFilteredReports(reports);
+    } else {
+      const lowerCaseQuery = throttledSearchQuery.toLowerCase();
+      const filtered = reports.filter(
+        (report) =>
+          report.address &&
+          report.address.toLowerCase().includes(lowerCaseQuery)
+      );
+      setFilteredReports(filtered);
+    }
+  }, [throttledSearchQuery, reports]);
+
   if (error) {
     return <div>Error: {error}</div>;
   }
@@ -61,7 +98,6 @@ function MapPage() {
     <div
       className="min-h-screen flex flex-col p-8"
       style={{
-        // backgroundImage: url('/your-background-image.png'),
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -77,6 +113,8 @@ function MapPage() {
               type="text"
               placeholder="Search location..."
               className="pl-10 pr-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white placeholder-gray-400"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <MapPin
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -92,24 +130,10 @@ function MapPage() {
 
       {/* Map Section */}
       <div className="bg-black/60 p-6 rounded-xl shadow-lg backdrop-blur-md flex-1 overflow-hidden">
-        <AzureMap reports={reports} />
-        
-        {/* Legend Section */}
-        <div className="mt-6 flex flex-wrap gap-4 text-white">
-          {Object.entries(severityColors).map(([severity, color]) => (
-            <div key={severity} className="flex items-center space-x-2">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: color }}
-              ></div>
-              <span>{severity}</span>
-            </div>
-          ))}
-        </div>
+        <AzureMap reports={filteredReports} />
       </div>
     </div>
   );
 }
 
 export default MapPage;
-

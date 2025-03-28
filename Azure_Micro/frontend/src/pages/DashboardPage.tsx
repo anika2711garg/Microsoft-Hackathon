@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, AlertTriangle } from "lucide-react";
 import axios from "axios";
+
 import DetailPage from "./DetailPage";
 import { useNavigate } from "react-router-dom";
 // import DetailPage from "./DetailPage";
+
 function DashboardPage() {
   const navigate = useNavigate()
   const dashboardRef = useRef(null);
@@ -34,7 +36,7 @@ function DashboardPage() {
         const data = Array.isArray(response.data.reports) ? response.data.reports : [];
         console.log("Reports fetched:", data);
         setReports(data);
-        setFilteredReports(data);
+      setFilteredReports(data);
       } catch (error) {
         console.error("Error fetching reports:", error);
       }
@@ -91,7 +93,10 @@ function DashboardPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300"
+              size={20}
+            />
           </div>
 
           {/* Filter Options */}
@@ -131,11 +136,21 @@ function DashboardPage() {
           <table className="w-full text-white">
             <thead className="bg-gray-800 text-gray-300">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -144,16 +159,18 @@ function DashboardPage() {
                   <tr key={index} className="hover:bg-gray-800 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <AlertTriangle className="text-red-500 mr-2" size={20} />
+                        <AlertTriangle
+                          className="text-red-500 mr-2"
+                          size={20}
+                        />
                         <span>{report.destruction_type}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                    
+                   
                       {/* {report.location ? `${report.location.latitude}, ${report.location.longitude}` : "Location not available"} */}
                       {report.address ? report.address : "Address not available"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{new Date(report.timestamp).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-white">
                         Pending
