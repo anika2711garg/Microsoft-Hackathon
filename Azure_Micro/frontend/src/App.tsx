@@ -4,8 +4,10 @@ import HomePage from './pages/HomePage';
 import MapPage from './pages/MapPage';
 import DashboardPage from './pages/DashboardPage';
 import NotificationsPage from './pages/NotificationsPage';
+
 // import dis from './assets/dis_3.gif';
 import alert from './assets/alert.png';
+import DetailPage from './pages/DetailPage';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/reports/:reportId" element={<DetailPage />} />
+
           </Routes>
         </main>
       </div>
