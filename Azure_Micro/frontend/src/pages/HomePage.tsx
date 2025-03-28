@@ -11,7 +11,7 @@ function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const [peopleAffected, setPeopleAffected] = useState<number>(0);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
