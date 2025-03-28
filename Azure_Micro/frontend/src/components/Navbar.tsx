@@ -26,15 +26,19 @@ function Navbar() {
           <div className="flex space-x-6">
             {[
               {
-                to: "/",
+                to: "/HomePage",
                 icon: AlertTriangle,
                 text: "Report",
-                hoverBg: "hover:bg-red-500", // Red background for Report button
+                hoverBg: "hover:bg-red-500",
+              },
+              {
+                to: "/",
+                icon: Home,
+                text: "Home", // Red background for Report button
               },
               { to: "/map", icon: Map, text: "Map" },
               { to: "/dashboard", icon: LayoutDashboard, text: "Dashboard" },
               { to: "/notifications", icon: Bell, text: "Notifications" },
-              { to: "/", icon: Home, text: "Home" },
               { to: "/about", icon: Info, text: "About" },
             ].map(({ to, icon: Icon, text, hoverBg }) => (
               <NavLink

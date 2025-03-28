@@ -481,19 +481,6 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
           >
            {loading ? "Submitting..." : "Submit Report"}
           </button>
-
-          <button
-            onClick={handleGetInsights}
-            className="w-full bg-green-500 hover:bg-green-600 text-black font-medium py-4 rounded-lg shadow-lg transition-all"
-          >
-            Get Insights
-          </button>
-          {insights && (
-            <div>
-              <h2>Video Insights</h2>
-              <pre>{JSON.stringify(insights, null, 2)}</pre>
-            </div>
-          )}
         </form>
       </div>
     </div>

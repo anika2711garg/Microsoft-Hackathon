@@ -107,7 +107,8 @@ const DetailPage: React.FC = () => {
           <div className="bg-gray-800 p-6 rounded-lg shadow-md flex justify-between">
             <p className="text-lg font-semibold text-indigo-400">Location</p>
             <p className="text-gray-300">
-              Lat: {report.location.latitude}, Lng: {report.location.longitude}
+              Latitude : {report.location.latitude}°N, Lng:{" "}
+              {report.location.longitude}°E
             </p>
           </div>
 
@@ -139,33 +140,34 @@ const DetailPage: React.FC = () => {
         <div className="space-y-6">
           {/* Video Player */}
           {videoId && (
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h2 className="text-lg font-bold text-teal-400 mb-4">
-                Video Player
-              </h2>
-              <iframe
-                width="560"
-                height="315"
-                src={`https://www.videoindexer.ai/embed/player/438cda5a-251f-4c17-8415-d9579ac378b0/${videoId}/?&locale=en&location=eastus`}
-                allowFullScreen
-              ></iframe>
-            </div>
-          )}
+            <div className="space-y-6">
+              {/* Video Player */}
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-lg font-bold text-teal-400 mb-4">
+                  Video Player
+                </h2>
+                <iframe
+                  width="560"
+                  height="315"
+                  src={`https://www.videoindexer.ai/embed/player/438cda5a-251f-4c17-8415-d9579ac378b0/${videoId}/?&locale=en&location=eastus`}
+                  allowFullScreen
+                ></iframe>
+              </div>
 
-          {/* Embedded Insights */}
-          {videoId && (
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <h2 className="text-lg font-bold text-teal-400 mb-4">
-                Video Insights
-              </h2>
-              <iframe
-                width="1280"
-                height="900"
-                src={`https://www.videoindexer.ai/embed/insights/438cda5a-251f-4c17-8415-d9579ac378b0/${videoId}/?&locale=en&location=eastus`}
-                frameBorder="0"
-                allowFullScreen
-                className="rounded-lg shadow-lg w-full"
-              ></iframe>
+              {/* Embedded Insights */}
+              <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-lg font-bold text-teal-400 mb-4">
+                  Video Insights
+                </h2>
+                <iframe
+                  width="1280"
+                  height="900"
+                  src={`https://www.videoindexer.ai/embed/insights/438cda5a-251f-4c17-8415-d9579ac378b0/${videoId}/?&locale=en&location=eastus`}
+                  frameBorder="0"
+                  allowFullScreen
+                  className="rounded-lg shadow-lg w-full"
+                ></iframe>
+              </div>
             </div>
           )}
         </div>
