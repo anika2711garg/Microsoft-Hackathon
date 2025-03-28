@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Mail, MapPin, Bell, User } from "lucide-react";
 
 const NotificationList = () => {
     interface Notification {
@@ -13,58 +13,78 @@ const NotificationList = () => {
     }
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
+
     const fetchNotifications = async () => {
-      try {
-          const response = await fetch("http://localhost:7071/api/getNotifications");
-          if (!response.ok) throw new Error("Failed to fetch notifications");
-          
-          const data = await response.json();
-          console.log("notifications are",data);
-          // Ensure the data is an array
-          return Array.isArray(data.notifications) ? data.notifications : [];
-      } catch (error) {
-          console.error("Error fetching notifications:", error);
-          return [];
-      }
-  };
-  
-  
-  useEffect(() => {
-    const fetchData = async () => {
-        const data = await fetchNotifications();
-        console.log("data before setting state:", data);
-        setNotifications(Array.isArray(data) ? data : []);
-        console.log("notifications state after setting:", notifications); // This will not immediately reflect the updated state
+        try {
+            const response = await fetch("http://localhost:7071/api/getNotifications");
+            if (!response.ok) throw new Error("Failed to fetch notifications");
+            
+            const data = await response.json();
+            console.log("Notifications are:", data);
+            return Array.isArray(data.notifications) ? data.notifications : [];
+        } catch (error) {
+            console.error("Error fetching notifications:", error);
+            return [];
+        }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
-    return () => clearInterval(interval);
-}, []);
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await fetchNotifications();
+            console.log("Data before setting state:", data);
+            setNotifications(Array.isArray(data) ? data : []);
+        };
 
-useEffect(() => {
-    console.log("notifications updated state:", notifications);
-}, [notifications]); // Log when state updates
+        fetchData();
+        const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+        return () => clearInterval(interval);
+    }, []);
 
+    useEffect(() => {
+        console.log("Notifications updated state:", notifications);
+    }, [notifications]);
 
     return (
-        <div className="max-w-2xl mx-auto p-4">
-            <h2 className="text-lg font-semibold mb-4">Sent Notifications</h2>
-            <div className="space-y-4">
-                
-                {notifications.map((alert) => (
-                    <div key={alert.id} className="border-l-4 border-blue-500 p-4 bg-gray-800 text-white rounded-lg">
-                        <p className="font-medium">{alert.disasterType} at {alert.location}</p>
-                        <p className="text-sm text-gray-300">{alert.description}</p>
-                        <p className="text-sm text-gray-400">Reported by: {alert.reporterName}</p>
-                        <p className="text-sm text-gray-500 mt-1">{new Date(alert.timestamp).toLocaleString()}</p>
-                        {alert.status === "sent" ? (
-                            <CheckCircle className="text-green-400 mt-2" size={20} />
-                        ) : (
-                            <XCircle className="text-red-400 mt-2" size={20} />
-                        )}
-                    </div>
-                ))}
+        <div className="max-w-3xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-xl">
+            <h2 className="text-2xl font-bold text-blue-400 flex items-center mb-6">
+                <Bell className="mr-2" /> Sent Notifications
+            </h2>
+
+            <div className="space-y-6">
+                {notifications.length > 0 ? (
+                    notifications.map((alert) => (
+                        <div
+                            key={alert.id}
+                            className="border-l-4 border-blue-500 p-5 bg-gray-800 rounded-lg shadow-md transition transform hover:scale-105"
+                        >
+                            <div className="flex items-center justify-between">
+                                <p className="text-xl font-semibold text-blue-300 flex items-center">
+                                    <MapPin className="mr-2 text-yellow-400" /> {alert.disasterType} at {alert.location}
+                                </p>
+                                {alert.status === "sent" ? (
+                                    <CheckCircle className="text-green-400 animate-pulse" size={24} />
+                                ) : (
+                                    <XCircle className="text-red-400" size={24} />
+                                )}
+                            </div>
+
+                            <p className="text-sm text-gray-300 mt-2">{alert.description}</p>
+                            <p className="text-sm text-gray-400 flex items-center mt-1">
+                                <User className="mr-2 text-purple-400" /> Reported by: {alert.reporterName}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                                🕒 {new Date(alert.timestamp).toLocaleString()}
+                            </p>
+
+                            {/* Email Notification Message */}
+                            <p className="mt-4 text-sm text-gray-300 flex items-center bg-gray-700 p-3 rounded-lg shadow">
+                                <Mail className="mr-2 text-yellow-400" /> Email notification sent to the <span className="text-yellow-300 font-bold mx-1">{alert.disasterType}</span> department.
+                            </p>
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-gray-400">No notifications sent yet.</p>
+                )}
             </div>
         </div>
     );

@@ -59,6 +59,8 @@ const ReportSchema = new mongoose.Schema({
     longitude: Number,
   },
   severity: String,
+  videoURL: String,
+  videoId: String,
   destruction_type: String,
   description: String,
   address: String,
@@ -163,6 +165,21 @@ const emailClient = new EmailClient(
   process.env.COMMUNICATION_SERVICES_CONNECTION_STRING
 );
 
+app.get("/fetch_report/:reportId", async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const report = await Report.findById(reportId);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: "Report not found" });
+    }
+
+    res.json({ success: true, report });
+  } catch (error) {
+    console.error("Error fetching report:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
 app.post("/send-email", async (req, res) => {
   try {
     const { to, subject, text, html } = req.body;
@@ -198,7 +215,7 @@ app.get("/fetch_reports", async (req, res) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-ffmpeg.setFfmpegPath("C:/Users/HP/OneDrive/Documents/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
+ffmpeg.setFfmpegPath("D:/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
 
 app.post("/convert-to-wav", upload.single("audio"), (req, res) => {
   if (!req.file) {
@@ -378,13 +395,13 @@ app.post("/uploadToVideoIndexer", async (req, res) => {
     }
 
     const videoIndexerAccessToken =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMDM2MDc4LCJleHAiOjE3NDMwMzk5NzgsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.GuDoXdBzUf0Sg1T3tnHwNZwF-BY5t-p8i22J5UlIMeAVC-ilpkA0D9tCF3oHMXUxRc1o9zkmdlC7U-afCCz41HWXuMT8uB4UjFGlW5aSamxF6dECxIysHeA1eOHmcMDlyLuCbztLyo5USJwOpCGte6Uz9pRr-WkqyyN-yg-5ihUP0v5y7kdELpO-oCC1YsAv2iAp4esWTMB1fnp4wnwqcdU52Eez3qJ_ZnQJCiyKgakgOo_0mrF6Lv55FvoTLCZCM4NdRD8xD8bwvJU-TjK2Dvod0beQ5sEEJmk7OrNRrShDTiPcTYbWUlPnf8Iy_xaicJ2jvR4Qs-BCbrGphiO2Kw";
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTE4ODU5LCJleHAiOjE3NDMxMjI3NTksImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.aMvqcnKFp_slxZbRWFkulpU5TKsfD7-85o3-8wrXZ2X1fBROc3vcH7y-mAgRjGO88jEX9TqBm_IP0Hw2hca9ZbnEWQ04WFAk_G9azxNIH4rKPh2SLny6eLHDBNhugK6hcnjUIHWp4opozaxhkTMsc8eLh3fr2MYzNJePUv1yoBOrbTbez0VWKj4aXLgf8nkStimMCFfEdbLk_7lu3C6_5BSS-oToqHFYHIEt6OTHoOyrCvFX9NjACczUaRoOeL6gJTR_WQ2wEU_MslDIEjdVMJks4HF7P6DzqskoT7La-8_trmsRGiVvgQlYX7wZvsi8bsHLKb4r_bpUw5a2Nq01rQ";
     // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
 
     // Construct the URL with query parameters
     const uploadUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos?accessToken=${encodeURIComponent(
       videoIndexerAccessToken
-    )}&name=fire&privacy=Private&language=English&videoUrl=${encodeURIComponent(
+    )}&name=fire&privacy=Publice&language=English&videoUrl=${encodeURIComponent(
       videoUrl
     )}&fileName=${encodeURIComponent(
       fileName
@@ -429,7 +446,7 @@ app.get("/getVideoInsights/:videoId", async (req, res) => {
     }
 
     const videoIndexerAccessToken =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMDM2MDc4LCJleHAiOjE3NDMwMzk5NzgsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.GuDoXdBzUf0Sg1T3tnHwNZwF-BY5t-p8i22J5UlIMeAVC-ilpkA0D9tCF3oHMXUxRc1o9zkmdlC7U-afCCz41HWXuMT8uB4UjFGlW5aSamxF6dECxIysHeA1eOHmcMDlyLuCbztLyo5USJwOpCGte6Uz9pRr-WkqyyN-yg-5ihUP0v5y7kdELpO-oCC1YsAv2iAp4esWTMB1fnp4wnwqcdU52Eez3qJ_ZnQJCiyKgakgOo_0mrF6Lv55FvoTLCZCM4NdRD8xD8bwvJU-TjK2Dvod0beQ5sEEJmk7OrNRrShDTiPcTYbWUlPnf8Iy_xaicJ2jvR4Qs-BCbrGphiO2Kw";
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTE4ODU5LCJleHAiOjE3NDMxMjI3NTksImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.aMvqcnKFp_slxZbRWFkulpU5TKsfD7-85o3-8wrXZ2X1fBROc3vcH7y-mAgRjGO88jEX9TqBm_IP0Hw2hca9ZbnEWQ04WFAk_G9azxNIH4rKPh2SLny6eLHDBNhugK6hcnjUIHWp4opozaxhkTMsc8eLh3fr2MYzNJePUv1yoBOrbTbez0VWKj4aXLgf8nkStimMCFfEdbLk_7lu3C6_5BSS-oToqHFYHIEt6OTHoOyrCvFX9NjACczUaRoOeL6gJTR_WQ2wEU_MslDIEjdVMJks4HF7P6DzqskoT7La-8_trmsRGiVvgQlYX7wZvsi8bsHLKb4r_bpUw5a2Nq01rQ";
     // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
 
     const insightsUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos/${videoId}/Index?reTranslate=false&includeStreamingUrls=true&includeSummarizedInsights=true`;
@@ -459,6 +476,8 @@ app.post(
     try {
       const {
         severity,
+        videoURL,
+        videoId,
         address,
         peopleAffected,
         destruction_type,
@@ -491,6 +510,8 @@ app.post(
         severity,
         destruction_type,
         address,
+        videoURL,
+        videoId,
         peopleAffected: peopleAffected,
         description,
         media: {

@@ -17,6 +17,7 @@ function HomePage() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [videoId, setVideoId] = useState(""); 
   const [insights, setInsights] = useState(null); 
+  const [publicURL, setPublicURL] = useState(""); // State to store the public URL of the uploaded video
 
   
   const handleFileChange = async (
@@ -40,6 +41,7 @@ function HomePage() {
           const data = await response.json();
           publicUrl = data.publicUrl;
           setUploadStatus(`Upload successful! File URL: ${data.publicUrl}`);
+          setPublicURL(data.publicUrl); // Save the public URL to state
           console.log("File uploaded to Blob Storage:", data.publicUrl);
         } else {
           const error = await response.json();
@@ -60,7 +62,7 @@ function HomePage() {
             },
             body: JSON.stringify({
               videoUrl: publicUrl, // The public URL of the video
-              fileName: "london-eye.mp4",
+              fileName: `${Date.now().toLocaleString}.mp4`,
             }),
           }
         );
@@ -166,6 +168,8 @@ function HomePage() {
       formData.append("peopleAffected", peopleAffected.toString());
       formData.append("image", image); // Ensure `image` is a File object
       formData.append("audio", convertedAudioBlob, "recorded_audio.wav");
+      formData.append("videoId", videoId); // Include the video ID if needed
+      formData.append("videoURL", publicURL); // Include the public URL if needed
 
       const response = await axios.post(
         "http://localhost:3000/report",
