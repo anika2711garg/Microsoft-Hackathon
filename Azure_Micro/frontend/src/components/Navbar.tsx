@@ -7,6 +7,7 @@ import {
   Home,
   Info,
 } from "lucide-react";
+import textLogo from "../assets/text-2.png";
 
 function Navbar() {
   return (
@@ -18,8 +19,12 @@ function Navbar() {
             to="/"
             className="flex items-center space-x-2 font-bold text-xl text-white drop-shadow-lg"
           >
-            <AlertTriangle className="text-yellow-300 animate-pulse" />
-            <span>Disaster Reporter</span>
+            {/* <AlertTriangle className="text-yellow-300 animate-pulse" /> */}
+            <img
+              src={textLogo}
+              alt="Disaster Management Logo"
+              className="mx-auto h-12"
+            />
           </NavLink>
 
           {/* Navigation Links */}

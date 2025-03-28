@@ -16,6 +16,7 @@ function HomePage() {
 const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [videoUploadStatus, setVideoUploadStatus] = useState("upload");
   const [videoId, setVideoId] = useState(""); 
   const [insights, setInsights] = useState(null); 
   const [publicURL, setPublicURL] = useState(""); // State to store the public URL of the uploaded video
@@ -32,6 +33,7 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
       try {
         setUploading(true);
         setUploadStatus("Uploading...");
+        setVideoUploadStatus("uploading");
 
         const response = await fetch("http://localhost:3000/uploadVideo", {
           method: "POST",
@@ -41,17 +43,20 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
         if (response.ok) {
           const data = await response.json();
           publicUrl = data.publicUrl;
-          setUploadStatus(`Upload successful! File URL: ${data.publicUrl}`);
+          // setUploadStatus(`Upload successful! File URL: ${data.publicUrl}`);
+          setVideoUploadStatus("uploading");
           setPublicURL(data.publicUrl); // Save the public URL to state
           console.log("File uploaded to Blob Storage:", data.publicUrl);
         } else {
           const error = await response.json();
           setUploadStatus(`Error: ${error.message}`);
+          setVideoUploadStatus("error");
         }
 
         setUploadStatus(
           "File uploaded to Blob Storage. Uploading to Video Indexer..."
         );
+        setVideoUploadStatus("uploaded");
 
         // Then upload the public URL to Azure Video Indexer
         const indexerResponse = await fetch(
@@ -81,36 +86,10 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
       } catch (error) {
         console.error("Error uploading file:", error);
         setUploadStatus("Error uploading file.");
+        setVideoUploadStatus("error");
       } finally {
         setUploading(false);
       }
-    }
-  };
-
-  const handleGetInsights = async () => {
-    if (!videoId) {
-      setUploadStatus("No video ID available to fetch insights.");
-      return;
-    }
-
-    try {
-      setUploadStatus("Fetching insights...");
-      const response = await fetch(
-        `http://localhost:3000/getVideoInsights/${videoId}`
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      }
-
-      const data = await response.json();
-      setInsights(data.data); // Save the retrieved insights
-      setUploadStatus("Insights fetched successfully!");
-      console.log("Video insights:", data.data);
-    } catch (error) {
-      console.error("Error fetching video insights:", error);
-      setUploadStatus("Error fetching video insights.");
     }
   };
 
@@ -298,7 +277,7 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
         backgroundImage: `url('/your-background-image.png')`,
       }}
     >
-      <div className="bg-black/60 p-10 rounded-xl shadow-2xl backdrop-blur-md max-w-lg w-full">
+      <div className="bg-black/60 p-10 rounded-xl shadow-2xl backdrop-blur-md max-w-xl w-full">
         <h1 className="text-3xl font-bold text-white mb-6 text-center drop-shadow-lg">
           Report a Disaster
         </h1>
@@ -307,8 +286,8 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
           {/* Disaster Type */}
           {loading && <p className="text-blue-500">Submitting...</p>}
 
-    {/* Success Message */}
-    {successMessage && <p className="text-green-500">{successMessage}</p>}
+          {/* Success Message */}
+          {successMessage && <p className="text-green-500">{successMessage}</p>}
           <div>
             <label className="block text-white font-medium mb-2">
               Disaster Type
@@ -323,6 +302,7 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
               <option value="flood">Flood</option>
               <option value="earthquake">Earthquake</option>
               <option value="accident">Accident</option>
+              <option value="Others">{"Others (Please Describe)"} </option>
             </select>
           </div>
           {/* Severity Level */}
@@ -417,17 +397,26 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
-            <label className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg shadow transition-all cursor-pointer">
+            <label
+              className={` flex-1 flex items-center ${
+                videoUploadStatus == `error` && `bg-red-600 hover:bg-red-500`
+              }  justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg shadow transition-all cursor-pointer `}
+            >
               <Upload size={20} />
-              <span>Upload Video</span>
+              {(videoUploadStatus == "upload" || "") && (
+                <span> Upload Video </span>
+              )}
+              {videoUploadStatus == "uploading" && <span> Uploading </span>}
+              {videoUploadStatus == "uploaded" && <span> Uploaded </span>}
+              {videoUploadStatus == "error" && <span> Error </span>}
               <input
                 type="file"
                 accept="*"
                 onChange={handleFileChange}
                 className="hidden"
               />
-              {uploading && <p className="mt-4 text-blue-500">Uploading...</p>}
-              {uploadStatus && <p className="mt-4">{uploadStatus}</p>}
+              {/* {uploading && <p className="mt-4 text-blue-500">Uploading...</p>}
+              {uploadStatus && <p className="mt-4">{uploadStatus}</p>} */}
             </label>
 
             <button
@@ -445,7 +434,7 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
             <label className="flex-1 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg shadow transition-all cursor-pointer">
               <Camera size={20} />
-              <span>Take Photo</span>
+              <span>{imageName ? `${imageName}` : "Take Photo"}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -454,7 +443,9 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
                 onChange={handleImageChange}
               />
             </label>
-            {imageName && <p className="mt-2 text-sm text-gray-300">{imageName}</p>}
+            {/* {imageName && (
+              <p className="mt-2 text-sm text-gray-300">{imageName}</p>
+            )} */}
           </div>
 
           {/* Recorded Audio */}
@@ -479,7 +470,7 @@ const [successMessage, setSuccessMessage] = useState<string | null>(null);
             className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-medium py-4 rounded-lg shadow-lg transition-all"
             disabled={loading}
           >
-           {loading ? "Submitting..." : "Submit Report"}
+            {loading ? "Submitting..." : "Submit Report"}
           </button>
         </form>
       </div>

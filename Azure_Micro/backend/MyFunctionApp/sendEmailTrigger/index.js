@@ -38,23 +38,25 @@ module.exports = async function (context, req) {
 
         // Email details
         const emailMessage = {
-            senderAddress: "DoNotReply@eb41ba9b-8e3e-4a28-be4b-27cc77a74414.azurecomm.net",
-            content: {
-                subject: `Disaster Report: ${disasterType} at ${location}`,
-                plainText: `A disaster has been reported.\n\nReporter: ${reporterName}\nLocation: ${location}\nType: ${disasterType}\nDescription: ${description}`,
-                html: `<h2>Disaster Alert</h2>
+          senderAddress:
+            "DoNotReply@eb41ba9b-8e3e-4a28-be4b-27cc77a74414.azurecomm.net",
+          content: {
+            subject: `Disaster Report: ${disasterType} at ${location}`,
+            plainText: `Disaster Report Details:\n\nReporter: ${reporterName}\nLocation: ${location}\nType: ${disasterType}\nDescription: ${description}`,
+            html: `<h2>Disaster Report Details</h2>
                        <p><strong>Reporter:</strong> ${reporterName}</p>
                        <p><strong>Location:</strong> ${location}</p>
                        <p><strong>Type:</strong> ${disasterType}</p>
-                       <p><strong>Description:</strong> ${description}</p>`
-            },
-            recipients: {
-                to: [
-                    { address: "yshivhare413@gmail.com" },  // Change to authorities' emails
-                    { address: "anshgup444@gmail.com" }
-                ]
-            }
+                       <p><strong>Description:</strong> ${description}</p>`,
+          },
+          recipients: {
+            to: [
+              { address: "yshivhare413@gmail.com" },
+              { address: "anshgup444@gmail.com" },
+            ],
+          },
         };
+
 
         // Send Email
         let emailSendOperation; // Declare emailSendOperation in the outer scope

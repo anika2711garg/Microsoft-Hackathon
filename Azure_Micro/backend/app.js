@@ -214,7 +214,7 @@ app.get("/fetch_reports", async (req, res) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-ffmpeg.setFfmpegPath("D:/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
+ffmpeg.setFfmpegPath("C:/Users/HP/OneDrive/Documents/ffm/ffmpeg-master-latest-win64-gpl-shared/bin/ffmpeg.exe");
 
 app.post("/convert-to-wav", upload.single("audio"), (req, res) => {
   if (!req.file) {
@@ -354,13 +354,12 @@ app.post("/uploadToVideoIndexer", async (req, res) => {
     }
 
     const videoIndexerAccessToken =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTI1OTEyLCJleHAiOjE3NDMxMjk4MTIsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.IunH1q_0P7jdrx5XFXkfZuBpWMIIYohwSD4CDIU8OeTL1_Zbap9r5ECxWmMAcRXV-zC4JXyglINoAqDHkOLNVF60OxupxhdLv0yoBU8FHYtNTfNLjHmTxm5OTETKhzWS-Nv7bjWFetZol9439jmmqA_tyh3rdsA1obgsrTYiJ5qsrBvjjv0t2xhhivOPtQtnDCdxqFzcFGgR15EDjUz0PFiXMPtjLoZCQ_pN12g0TL1h0llSiIQ9DIxRZrIta3BJnEVHmsIIu28cq2m8kM46ndqDfx600PdoWlWidSOIcnpLyjqSXho9yL-CbGHXax29AyHebpytM5LVAGmdiJP94A";
-    // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTc2NjQ1LCJleHAiOjE3NDMxODA1NDUsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.O2dSMqm4sagVNeHjbI1OH9fdrUBTAp-Rb1eKA5Cvc-_849fefpcjkQEU6QuzVrHdF1GbcoJsMCNXsRtfslOz8WXerJ09xsv3W-pirFUw4GRh_KU2wZbmBvx6ShKjcFArOzp1Z5YQXpfdk39dyE4S5UTyYNn5uOrwuvyBKu0ElICz149jP2PFeK2DTW3mLUMH5MLJQl515RrBe5CzWCMdp8J9fKelOgUjs1_RZ_PaUcKvFbDE4LGUcQja6nn-y7MD6419sd5vEWoYhYGheJtQIsgDBjjnKGk3QaEIKFfP2NYhyeuLLtBwzcH8nYxPHyn8s9BJ0eJu_gkyR3crIXCZxw";
 
     // Construct the URL with query parameters
     const uploadUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos?accessToken=${encodeURIComponent(
       videoIndexerAccessToken
-    )}&name=fire&privacy=Publice&language=English&videoUrl=${encodeURIComponent(
+    )}&name=fire&privacy=Public&language=English&videoUrl=${encodeURIComponent(
       videoUrl
     )}&fileName=${encodeURIComponent(
       fileName
@@ -405,11 +404,12 @@ app.get("/getVideoInsights/:videoId", async (req, res) => {
     }
 
     const videoIndexerAccessToken =
-      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTI1OTEyLCJleHAiOjE3NDMxMjk4MTIsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.IunH1q_0P7jdrx5XFXkfZuBpWMIIYohwSD4CDIU8OeTL1_Zbap9r5ECxWmMAcRXV-zC4JXyglINoAqDHkOLNVF60OxupxhdLv0yoBU8FHYtNTfNLjHmTxm5OTETKhzWS-Nv7bjWFetZol9439jmmqA_tyh3rdsA1obgsrTYiJ5qsrBvjjv0t2xhhivOPtQtnDCdxqFzcFGgR15EDjUz0PFiXMPtjLoZCQ_pN12g0TL1h0llSiIQ9DIxRZrIta3BJnEVHmsIIu28cq2m8kM46ndqDfx600PdoWlWidSOIcnpLyjqSXho9yL-CbGHXax29AyHebpytM5LVAGmdiJP94A";
+      "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJWZXJzaW9uIjoiMi4wLjAuMCIsIktleVZlcnNpb24iOiI3NTExMjE1MGMzNDg0ZjI1ODdhNGFiMWE2OTMyMjE1OCIsIkFjY291bnRJZCI6IjQzOGNkYTVhLTI1MWYtNGMxNy04NDE1LWQ5NTc5YWMzNzhiMCIsIkFjY291bnRUeXBlIjoiQXJtIiwiUGVybWlzc2lvbiI6IkNvbnRyaWJ1dG9yIiwiRXh0ZXJuYWxVc2VySWQiOiJBMEI5MkU1OEE2NTU0NkMzODBENDI5OTVERDhGMTc3NSIsIlVzZXJUeXBlIjoiTWljcm9zb2Z0Q29ycEFhZCIsIklzc3VlckxvY2F0aW9uIjoiZWFzdHVzIiwibmJmIjoxNzQzMTc2NjQ1LCJleHAiOjE3NDMxODA1NDUsImlzcyI6Imh0dHBzOi8vYXBpLnZpZGVvaW5kZXhlci5haS8iLCJhdWQiOiJodHRwczovL2FwaS52aWRlb2luZGV4ZXIuYWkvIn0.O2dSMqm4sagVNeHjbI1OH9fdrUBTAp-Rb1eKA5Cvc-_849fefpcjkQEU6QuzVrHdF1GbcoJsMCNXsRtfslOz8WXerJ09xsv3W-pirFUw4GRh_KU2wZbmBvx6ShKjcFArOzp1Z5YQXpfdk39dyE4S5UTyYNn5uOrwuvyBKu0ElICz149jP2PFeK2DTW3mLUMH5MLJQl515RrBe5CzWCMdp8J9fKelOgUjs1_RZ_PaUcKvFbDE4LGUcQja6nn-y7MD6419sd5vEWoYhYGheJtQIsgDBjjnKGk3QaEIKFfP2NYhyeuLLtBwzcH8nYxPHyn8s9BJ0eJu_gkyR3crIXCZxw";
     // console.log("Video Indexer Access Token:", videoIndexerAccessToken);
 
     const insightsUrl = `https://api.videoindexer.ai/eastus/Accounts/438cda5a-251f-4c17-8415-d9579ac378b0/Videos/${videoId}/Index?reTranslate=false&includeStreamingUrls=true&includeSummarizedInsights=true`;
 
+  
     const response = await axios.get(insightsUrl, {
       headers: {
         Authorization: `Bearer ${videoIndexerAccessToken}`,
@@ -425,8 +425,6 @@ app.get("/getVideoInsights/:videoId", async (req, res) => {
     res.status(500).json({ message: "Error retrieving video insights", error });
   }
 });
-
-
 
 app.post(
   "/report",

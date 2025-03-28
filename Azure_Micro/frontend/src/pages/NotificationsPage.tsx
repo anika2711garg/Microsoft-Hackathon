@@ -20,7 +20,7 @@ const NotificationList = () => {
             if (!response.ok) throw new Error("Failed to fetch notifications");
             
             const data = await response.json();
-            console.log("Notifications are:", data);
+            // console.log("Notifications are:", data);
             return Array.isArray(data.notifications) ? data.notifications : [];
         } catch (error) {
             console.error("Error fetching notifications:", error);
@@ -31,7 +31,7 @@ const NotificationList = () => {
     useEffect(() => {
         const fetchData = async () => {
             const data = await fetchNotifications();
-            console.log("Data before setting state:", data);
+            // console.log("Data before setting state:", data);
             setNotifications(Array.isArray(data) ? data : []);
         };
 
@@ -40,9 +40,9 @@ const NotificationList = () => {
         return () => clearInterval(interval);
     }, []);
 
-    useEffect(() => {
-        console.log("Notifications updated state:", notifications);
-    }, [notifications]);
+    // useEffect(() => {
+    //     console.log("Notifications updated state:", notifications);
+    // }, [notifications]);
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-xl">

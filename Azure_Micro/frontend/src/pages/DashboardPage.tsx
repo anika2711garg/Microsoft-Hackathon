@@ -143,14 +143,14 @@ function DashboardPage() {
                   Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                  Date
+                  Date & Time
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                {/* <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                   Actions
-                </th>
+                </th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
@@ -167,23 +167,26 @@ function DashboardPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                   
                       {/* {report.location ? `${report.location.latitude}, ${report.location.longitude}` : "Location not available"} */}
-                      {report.address ? report.address : "Address not available"}
+                      {report.address
+                        ? report.address
+                        : "Address not available"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-500 text-white">
-                        Pending
+                    <td className="px-6 py-4 whitespace-nowrap ">
+                      <span className="px-2 inline-flex text-m leading-5 font-semibold text-white right-3">
+                        {report.timestamp
+                          ? new Date(report.timestamp).toLocaleString()
+                          : "Timestamp not available"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-      <button
-        onClick={() => navigate(`/reports/${report._id}`)}
-        className="text-indigo-400 hover:text-indigo-500 transition"
-      >
-        View Details
-      </button>
-    </td>
+                      <button
+                        onClick={() => navigate(`/reports/${report._id}`)}
+                        className="text-indigo-400 hover:text-indigo-500 transition"
+                      >
+                        View Details
+                      </button>
+                    </td>
                     {/* <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button  className="text-indigo-400 hover:text-indigo-500 transition">View Details</button>
                     </td> */}
