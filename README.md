@@ -2,6 +2,9 @@
 
 ## Overview
 The Disaster Management System is a cloud-based platform that allows users to report disasters efficiently. It leverages various Azure services to analyze, process, and notify relevant authorities in real-time.
+# Here is the Live Demo
+https://youtu.be/tpAC3SFzV_4
+
 
 ## Features 🌟
 - **📹 Video Analysis**: Uses Azure AI Video Indexer to extract insights from uploaded videos.
